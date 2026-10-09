@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="week03-slides_files/libs/clipboard/clipboard.min.js"></script>
+<script src="week03-slides_files/libs/quarto-html/tabby.min.js"></script>
+<script src="week03-slides_files/libs/quarto-html/popper.min.js"></script>
+<script src="week03-slides_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="week03-slides_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="week03-slides_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="week03-slides_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
+
+  <meta name="author" content="Dominic Pazzula">
+  <title>Monte Carlo and Covariance Estimation</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="week03-slides_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="week03-slides_files/libs/revealjs/dist/reveal.css">
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="week03-slides_files/libs/revealjs/dist/theme/quarto-2740581606dc327e82f18f789b69d8a0.css">
+  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
+  <link href="week03-slides_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="week03-slides_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="week03-slides_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="week03-slides_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Monte Carlo and Covariance Estimation</h1>
+  <p class="subtitle">FinTech 545 — Week 03</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Dominic Pazzula
+</div>
+</div>
+</div>
+
+</section>
+<section>
+<section id="monte-carlo-simulation" class="title-slide slide level1 center">
+<h1>Monte Carlo Simulation</h1>
+
+</section>
+<section id="why-simulate" class="slide level2">
+<h2>Why Simulate</h2>
+<p>Week 01 and Week 02 gave us distributions we can write down. Almost nothing we actually hold is one of them.</p>
+<p>A portfolio of options on correlated assets has a P&amp;L distribution with no closed form, and no amount of algebra will produce one.</p>
+<p>Simulation replaces the algebra. Draw the inputs from a distribution we do understand, push each draw through the function, and read the answer off the resulting sample.</p>
+<aside class="notes">
+<p>The whole method is a trade. Give up the exact answer to a problem we cannot solve, take an approximate answer to one we can.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="the-cost" class="slide level2">
+<h2>The Cost</h2>
+<p>The answer is itself a random variable.</p>
+<p>Every number produced this way carries simulation error, and that error falls as <span class="math inline">1/\sqrt{K}</span> in the number of draws.</p>
+<p>Four times the draws to halve the error. Report a simulated number without knowing its simulation error and you are reporting noise to two decimal places.</p>
+</section>
+<section id="the-inverse-cdf-method" class="slide level2">
+<h2>The Inverse CDF Method</h2>
+<p>Drawing univariate random numbers is easy. Most packages have a random function, and many allow a distribution to be specified.</p>
+<p>Sometimes only the uniform on <span class="math inline">(0,1)</span> is available. The quantile function turns that into a draw from anything.</p>
+<p><span class="math display">
+F(x) = P(X \leq x) = \int_{lb}^{x} f(t)\, dt
+</span></p>
+<p>The quantile function is its inverse, <span class="math inline">F^{-1}(p)</span>: the value of <span class="math inline">x</span> such that <span class="math inline">F(x) = p</span>.</p>
+</section>
+<section id="one-line" class="slide level2">
+<h2>One Line</h2>
+<p>The CDF is monotonic and defined between <span class="math inline">(0,1)</span>, so the quantile function gives a 1:1 mapping from <span class="math inline">(0,1)</span> into the range of the distribution.</p>
+<p><span class="math display">
+x = F^{-1}(u), \quad u \sim U(0,1)
+</span></p>
+<p>This converts any distribution with a computable quantile function into a draw, using only a uniform generator.</p>
+<p>It is also the mechanism behind the copula in Week 05, where we run the transform in both directions: CDF to get to uniforms, inverse CDF to get back out.</p>
+</section>
+<section id="simulating-a-correlated-system" class="slide level2">
+<h2>Simulating a Correlated System</h2>
+<p>One variable at a time is not the problem we have. Recall from last week, if <span class="math inline">X</span> is multivariate normal</p>
+<p><span class="math display">
+X \sim N(\mu, \Sigma)
+</span></p>
+<p>there exists</p>
+<p><span class="math display">
+\mu \in \mathbb{R}^{n},\ L \in \mathbb{R}^{n \times m} \quad \text{such that} \quad X = LZ + \mu
+</span></p>
+<p>where</p>
+<p><span class="math display">
+Z_i \sim N(0,1), \quad i \in [1,m], \qquad \Sigma = LL'
+</span></p>
+</section>
+<section id="the-multivariate-draw-algorithm" class="slide level2">
+<h2>The Multivariate Draw Algorithm</h2>
+<p>To simulate <span class="math inline">K</span> draws from an <span class="math inline">N</span> variable multivariate normal:</p>
+<ol type="1">
+<li>Factor <span class="math inline">\Sigma</span> into <span class="math inline">L</span>, which is <span class="math inline">(N \times M)</span></li>
+<li>Generate <span class="math inline">K \times M</span> random standard normals, <span class="math inline">Z</span>, shaped <span class="math inline">(M \times K)</span></li>
+<li><span class="math inline">X = (LZ + \mu)^T</span>, with shape <span class="math inline">(K \times N)</span></li>
+</ol>
+<p>Each series is on the row without the transpose. We think of tables as columns of values, so the transpose puts the matrix into a data table format.</p>
+</section>
+<section id="step-1-is-the-whole-week" class="slide level2">
+<h2>Step 1 Is the Whole Week</h2>
+<p>Steps 2 and 3 are a random number call and a matrix multiply.</p>
+<p>Producing an <span class="math inline">L</span> from a covariance matrix estimated on real data is where the work is, and where the failures are.</p>
+<p>A lot of packages have a multivariate normal generator. With the data problems we are about to hit, knowing how to generate your own is necessary.</p>
+</section></section>
+<section>
+<section id="cholesky-factorization" class="title-slide slide level1 center">
+<h1>Cholesky Factorization</h1>
+
+</section>
+<section id="the-root" class="slide level2">
+<h2>The Root</h2>
+<p>The most used factorization of <span class="math inline">\Sigma</span>. It applies to positive definite matrices, and the factor <span class="math inline">L</span> is lower triangular.</p>
+<p>Sometimes called the Cholesky root, because the factor is analogous to a square root.</p>
+<p>Roughly 2x more efficient to calculate than the <span class="math inline">LU</span> factorization, which is why it is the one that gets used.</p>
+<p>If the matrix is only PSD, the root can still be calculated allowing for a column of zeros. The number of non-zero columns is the rank of the matrix.</p>
+</section>
+<section id="the-algorithm" class="slide level2">
+<h2>The Algorithm</h2>
+<p><span class="math inline">A</span> is symmetric and PD, <span class="math inline">L</span> is lower triangular, <span class="math inline">A = LL'</span>. Multiply the two triangular matrices, match entries, and every element of <span class="math inline">L</span> falls out:</p>
+<p><span class="math display">
+L_{jj} = \sqrt{A_{jj} - \sum_{k=1}^{j-1} L_{jk}^2}
+</span></p>
+<p><span class="math display">
+L_{ij} = \frac{1}{L_{jj}}\left( A_{ij} - \sum_{k=1}^{j-1} L_{ik} L_{jk} \right), \quad i &gt; j
+</span></p>
+<p>Nothing on the right hand side involves an unknown, which is why a single pass works.</p>
+</section>
+<section id="down-the-columns" class="slide level2">
+<h2>Down the Columns</h2>
+<ol type="1">
+<li>Column <em>j</em>, start on the diagonal element</li>
+<li>Subtract the sum of squares of the root matrix values in row <em>j</em> from the input matrix diagonal</li>
+<li>Update the root at (<em>j,j</em>) with the square root of step 2</li>
+<li>Moving down the column, row <em>i</em>:
+<ol type="a">
+<li>Dot product of sub matrix vectors [<em>i, 1:(j-1)</em>] and [<em>j, 1:(j-1)</em>]</li>
+<li>Subtract a. from element (<em>i,j</em>) of the input matrix</li>
+<li>Divide b. by the <em>j</em> diagonal element of the root</li>
+<li>Store the result in element (<em>i,j</em>) of the root</li>
+</ol></li>
+<li>Repeat for the next column</li>
+</ol>
+</section>
+<section id="a-worked-example" class="slide level2">
+<h2>A Worked Example</h2>
+<p><span class="math display">
+A = \begin{pmatrix}
+4 &amp; 2 &amp; -2 &amp; 4\\
+2 &amp; 10 &amp; 5 &amp; -1\\
+-2 &amp; 5 &amp; 21 &amp; 0\\
+4 &amp; -1 &amp; 0 &amp; 15
+\end{pmatrix}
+</span></p>
+<p>Read as a covariance matrix, the variances are 4, 10, 21, and 15, and the implied correlations run from <span class="math inline">-0.22</span> to <span class="math inline">0.52</span>.</p>
+</section>
+<section id="columns-one-and-two" class="slide level2">
+<h2>Columns One and Two</h2>
+<p>Column 1. The diagonal has no prior terms to subtract, so <span class="math inline">L_{11} = \sqrt{4} = 2</span>. Divide the rest of the column by it:</p>
+<p><span class="math display">
+L_{21} = \tfrac{2}{2} = 1, \qquad
+L_{31} = \tfrac{-2}{2} = -1, \qquad
+L_{41} = \tfrac{4}{2} = 2
+</span></p>
+<p>Column 2. Subtract the squares already placed in row 2, then divide:</p>
+<p><span class="math display">
+L_{22} = \sqrt{10 - 1^2} = 3
+</span></p>
+<p><span class="math display">
+L_{32} = \frac{5 - (-1)(1)}{3} = 2, \qquad
+L_{42} = \frac{-1 - (2)(1)}{3} = -1
+</span></p>
+</section>
+<section id="columns-three-and-four" class="slide level2">
+<h2>Columns Three and Four</h2>
+<p><span class="math display">
+L_{33} = \sqrt{21 - (-1)^2 - 2^2} = \sqrt{16} = 4
+</span></p>
+<p><span class="math display">
+L_{43} = \frac{0 - (2)(-1) - (-1)(2)}{4} = 1
+</span></p>
+<p><span class="math display">
+L_{44} = \sqrt{15 - 2^2 - (-1)^2 - 1^2} = \sqrt{9} = 3
+</span></p>
+</section>
+<section id="the-result" class="slide level2">
+<h2>The Result</h2>
+<p><span class="math display">
+L = \begin{pmatrix}
+2 &amp; 0 &amp; 0 &amp; 0\\
+1 &amp; 3 &amp; 0 &amp; 0\\
+-1 &amp; 2 &amp; 4 &amp; 0\\
+2 &amp; -1 &amp; 1 &amp; 3
+\end{pmatrix}
+</span></p>
+<p>Multiply <span class="math inline">LL'</span> and confirm you recover <span class="math inline">A</span>. Work this by hand once.</p>
+<p>Every failure mode in the rest of this week is a failure of one of those four square roots or one of those six divisions.</p>
+</section>
+<section id="how-packages-do-it" class="slide level2">
+<h2>How Packages Do It</h2>
+<p>Most linear algebra libraries run this algorithm on blocks of the matrix.</p>
+<p>The dot products become matrix multiplications, the division becomes a matrix inverse, and the square root is a single threaded Cholesky call.</p>
+<p>Block size is chosen from CPU cache size, and vector operations handle the multiplications.</p>
+<p><a href="http://www.netlib.org/utk/papers/factor/node9.html" class="uri">http://www.netlib.org/utk/papers/factor/node9.html</a></p>
+</section>
+<section id="the-psd-case" class="slide level2">
+<h2>The PSD Case</h2>
+<p>If the matrix is PSD rather than PD, the algorithm breaks down.</p>
+<p>At least one root diagonal element is 0. The column calculation then fails when we divide by it.</p>
+<p>The patch: set every value in that column to 0.</p>
+</section>
+<section id="the-patch-works" class="slide level2">
+<h2>The Patch Works</h2>
+<p><span class="math inline">LL'</span> still reproduces <span class="math inline">\Sigma</span> exactly, and the simulation still runs.</p>
+<p>The Cholesky failing is a property of the PD algorithm, not of the matrix.</p>
+</section>
+<section id="the-patch-is-not-free" class="slide level2">
+<h2>The Patch Is Not Free</h2>
+<p>A zero column means one fewer independent random number driving the system.</p>
+<p>Simulating <span class="math inline">N</span> variables from a rank <span class="math inline">M</span> matrix gives draws that all lie inside an <span class="math inline">M</span> dimensional subspace. No simulated scenario can ever produce a pattern outside it.</p>
+<p>Week 09 is built on that observation.</p>
+</section></section>
+<section>
+<section id="missing-data" class="title-slide slide level1 center">
+<h1>Missing Data</h1>
+
+</section>
+<section id="different-calendars" class="slide level2">
+<h2>Different Calendars</h2>
+<p>Missing values are very common in finance.</p>
+<p>Not all markets are open at the same time on the same days, and a holiday in one market is not a holiday in another, even in the same country.</p>
+<p>Take three assets on three trading calendars over ten days, and ask what the covariance matrix is estimated from.</p>
+</section>
+<section id="three-assets-three-calendars" class="slide level2">
+<h2>Three Assets, Three Calendars</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th style="text-align: right;">Date</th>
+<th style="text-align: center;">Asset A</th>
+<th style="text-align: center;">Asset B</th>
+<th style="text-align: center;">Asset C</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;">X</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;">X</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;">X</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;">X</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;">X</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">X</td>
+<td style="text-align: center;">X</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="two-common-methods" class="slide level2">
+<h2>Two Common Methods</h2>
+<p><strong>Overlapping rows only.</strong></p>
+<ul>
+<li>Limits the information</li>
+<li>Days 2, 6, 7, and 9 only, which is 40%</li>
+<li>Behavior on the other days is ignored</li>
+</ul>
+<p><strong>Pairwise.</strong> Find the matching rows for each pair and build the matrix piece by piece.</p>
+<ul>
+<li>Uses more information, but not all</li>
+<li>Assets A and B use days 1, 2, 6, 7, 8, and 9</li>
+<li>The matrix is symmetric, but it is not guaranteed PSD</li>
+</ul>
+</section>
+<section id="the-trade" class="slide level2">
+<h2>The Trade</h2>
+<p>Method 1 keeps 4 rows out of 10 and returns a matrix guaranteed to be PSD.</p>
+<p>Method 2 uses 6 rows for the A-B pair and returns a matrix that may not be.</p>
+<p>Each entry of a pairwise matrix is estimated from a different sample, so the entries are not required to be mutually consistent.</p>
+<p>A set of mutually inconsistent correlations is exactly what a negative eigenvalue is. Nothing here is a rounding problem.</p>
+</section></section>
+<section>
+<section id="covariance-matrix-generation" class="title-slide slide level1 center">
+<h1>Covariance Matrix Generation</h1>
+
+</section>
+<section id="techniques-one-through-four" class="slide level2">
+<h2>Techniques, One Through Four</h2>
+<ol type="1">
+<li><strong>Default covariance.</strong> With perfect data and an assumption of normality, the estimator from last week is the best one</li>
+<li><strong>Overlapping rows.</strong> Works when there is enough fully overlapping history. Not the full information, but with a lot of data the matrix should be fine</li>
+<li><strong>Pairwise.</strong> For when there is not enough overlap. Often non-PSD</li>
+<li><strong>Exponential weights.</strong> Financial data are time variant, so weight recent observations more heavily. The RiskMetrics covariance</li>
+</ol>
+</section>
+<section id="techniques-five-through-seven" class="slide level2">
+<h2>Techniques, Five Through Seven</h2>
+<ol start="5" type="1">
+<li><strong>EM algorithm.</strong> Iterative, uses the likelihood, handles missing data. Gets unstable as the missing proportion rises, and wants a large number of observations to converge. Worth reading about on your own</li>
+<li><strong>High frequency methods.</strong> At millisecond intervals it is impossible to see updated prices on all assets. See “highfrequency” in R and “HighFrequencyCovariance” in Julia</li>
+<li><strong>Split correlation from variance.</strong> Estimate correlations by any method above, but use the full history of each variable for the variances</li>
+</ol>
+</section>
+<section id="item-seven" class="slide level2">
+<h2>Item Seven</h2>
+<p>The rank problem comes from the correlation estimation, not from the variances.</p>
+<p>Splitting the problem lets each piece use the data it can, and it isolates the rank problem in the correlation matrix where the repair algorithms operate.</p>
+<p><span class="math display">
+\Sigma = D\, C\, D, \quad D = \operatorname{diag}(\sigma_1, \dots, \sigma_n)
+</span></p>
+<p>A full-history variance for each variable survives whatever was done to <span class="math inline">C</span>.</p>
+</section>
+<section id="a-note-on-pearson" class="slide level2">
+<h2>A Note on Pearson</h2>
+<p>When we break the assumption of normality and we have what look like outliers to the normal distribution, the Pearson coefficient may not be the best estimator of correlation.</p>
+<p>We return to this in a few weeks.</p>
+</section></section>
+<section>
+<section id="exponentially-weighted-covariance" class="title-slide slide level1 center">
+<h1>Exponentially Weighted Covariance</h1>
+
+</section>
+<section id="riskmetrics" class="slide level2">
+<h2>RiskMetrics</h2>
+<p>JP Morgan was one of the first banks to use exponentially weighted covariance matrices in their risk analytics, starting in the late 1980s.</p>
+<p>Their risk management was considered some of the best in the industry, and they spun out a software and consulting company called RiskMetrics.</p>
+</section>
+<section id="the-estimator" class="slide level2">
+<h2>The Estimator</h2>
+<p><span class="math display">
+\sigma_t^2 = \lambda \sigma_{t-1}^2 + (1-\lambda)\left( x_{t-1} - \bar{x} \right)^2
+</span></p>
+<p>A simple exponential smoothing model. The variance for tomorrow is updated from today’s forecast variance and today’s deviation from the mean.</p>
+<p>Back substitute:</p>
+<p><span class="math display">
+\sigma_t^2 = (1-\lambda) \sum_{i=1}^{\infty} \lambda^{i-1} \left( x_{t-i} - \bar{x} \right)^2
+</span></p>
+</section>
+<section id="the-weights" class="slide level2">
+<h2>The Weights</h2>
+<p><span class="math display">
+\lim_{n \to \infty} (1-\lambda) \sum_{i=1}^{n} \lambda^{i-1} = 1
+</span></p>
+<p>so setting <span class="math inline">w_{t-i} = (1-\lambda)\, \lambda^{i-1}</span> gives a weighted estimator over an infinite horizon.</p>
+<p>We do not have an infinite horizon, so the weights are normalized to sum to 1:</p>
+<p><span class="math display">
+\hat{w}_{t-i} = \frac{w_{t-i}}{\sum_{j=1}^{n} w_{t-j}}
+</span></p>
+</section>
+<section id="the-estimators" class="slide level2">
+<h2>The Estimators</h2>
+<p><span class="math display">
+\widehat{\sigma_t^2} = \sum_{i=1}^{n} \hat{w}_{t-i} \left( x_{t-i} - \bar{x} \right)^2
+</span></p>
+<p><span class="math display">
+\widehat{\operatorname{cov}(x,y)} = \sum_{i=1}^{n} \hat{w}_{t-i} \left( x_{t-i} - \bar{x} \right)\left( y_{t-i} - \bar{y} \right)
+</span></p>
+<p>Equal weighting the time series reduces to the MLE values from last week.</p>
+</section>
+<section id="choosing-lambda" class="slide level2">
+<h2>Choosing Lambda</h2>
+<p>RiskMetrics research found <span class="math inline">\lambda = 0.97</span> was the best value across a number of asset classes.</p>
+<p>Be careful with that number. 0.97 is the decay factor for <strong>monthly</strong> data. For daily data, which is what we use in this class, RiskMetrics used <span class="math inline">\lambda = 0.94</span>.</p>
+<p>Treat both as starting guides. They came from one firm’s data in the mid 1990s, across a particular set of asset classes, at a particular sampling frequency.</p>
+<p>A more liquid market, a longer horizon, or a different use for the estimate can all justify moving off them. What the choice should not be is unexamined.</p>
+</section>
+<section id="what-the-choice-buys" class="slide level2">
+<h2>What the Choice Buys</h2>
+
+<img data-src="../figures/ew-weights.png" style="width:66.0%" class="r-stretch quarto-figure-center"><p class="caption">Normalized exponential weights over one trading year, against equal weighting</p><p>At <span class="math inline">\lambda = 0.94</span>, half the total weight sits in the most recent 12 observations. At <span class="math inline">\lambda = 0.97</span> it takes 23. Equal weighting over the same 260 days puts half the weight in the most recent 130.</p>
+</section>
+<section id="effective-sample-size" class="slide level2">
+<h2>Effective Sample Size</h2>
+<p>An equally weighted estimator built on <span class="math inline">n</span> observations uses <span class="math inline">n</span> observations. An exponentially weighted one does not, and the number it does use is worth computing.</p>
+<p><span class="math display">
+n_{\text{eff}} = \frac{1}{\sum_i \hat{w}_i^2}
+</span></p>
+<p>For equal weights, <span class="math inline">\hat{w}_i = 1/n</span>, the sum is <span class="math inline">1/n</span>, and <span class="math inline">n_{\text{eff}} = n</span>.</p>
+</section>
+<section id="the-closed-form" class="slide level2">
+<h2>The Closed Form</h2>
+<p>For exponential weights on an infinite horizon:</p>
+<p><span class="math display">
+\sum_{i=1}^{\infty} \hat{w}_i^2 = (1-\lambda)^2 \sum_{i=1}^{\infty} \lambda^{2(i-1)} = \frac{(1-\lambda)^2}{1-\lambda^2} = \frac{1-\lambda}{1+\lambda}
+</span></p>
+<p><span class="math display">
+n_{\text{eff}} = \frac{1+\lambda}{1-\lambda}, \qquad h = \frac{\ln(0.5)}{\ln(\lambda)}
+</span></p>
+</section>
+<section id="effective-sample-size-against-lambda" class="slide level2">
+<h2>Effective Sample Size Against Lambda</h2>
+
+<img data-src="../figures/ess-lambda.png" style="width:70.0%" class="r-stretch quarto-figure-center"><p class="caption">Effective sample size and half life across the usable range of <span class="math inline">\lambda</span></p></section>
+<section id="it-does-not-depend-on-n" class="slide level2">
+<h2>It Does Not Depend on n</h2>
+<p>At <span class="math inline">\lambda = 0.94</span>, <span class="math inline">n_{\text{eff}}</span> is 32 observations whether you feed the estimator one year of history or ten.</p>
+<p>Adding data past roughly four half lives changes the estimate by less than the rounding on the way to the report.</p>
+<p>Storing five years of returns to run a <span class="math inline">\lambda = 0.94</span> estimator is storage, not information.</p>
+</section>
+<section id="the-curve-is-convex" class="slide level2">
+<h2>The Curve Is Convex</h2>
+<p>And it gets steep exactly where people set <span class="math inline">\lambda</span>.</p>
+<ul>
+<li>0.94 to 0.97 doubles <span class="math inline">n_{\text{eff}}</span> from 32 to 66</li>
+<li>0.97 to 0.99 triples it again to 199</li>
+</ul>
+<p>Small changes in <span class="math inline">\lambda</span> are not small changes in the estimator. Reporting <span class="math inline">\lambda</span> to two decimals conceals that.</p>
+</section>
+<section id="error-scales-with-n_eff" class="slide level2">
+<h2>Error Scales with n_eff</h2>
+<p>Estimation error scales with <span class="math inline">n_{\text{eff}}</span>, not with <span class="math inline">n</span>. The standard error of a volatility estimate is roughly <span class="math inline">\sigma / \sqrt{2 n_{\text{eff}}}</span>.</p>
+<p>That is about 12.5% of the estimate at <span class="math inline">\lambda = 0.94</span> and 8.7% at <span class="math inline">\lambda = 0.97</span>.</p>
+<p>A 20% volatility estimated at <span class="math inline">\lambda = 0.94</span> carries a standard error of about 2.5 volatility points. That is the price of responsiveness, and it is not small.</p>
+</section>
+<section id="the-conditioning-consequence" class="slide level2">
+<h2>The Conditioning Consequence</h2>
+<p>Every weight is strictly positive, so the matrix is not singular in exact arithmetic.</p>
+<p>But the smallest eigenvalues are supported almost entirely by observations carrying vanishing weight.</p>
+<p>A covariance matrix estimated at <span class="math inline">\lambda = 0.94</span> across more than roughly <span class="math inline">n_{\text{eff}}</span> assets is numerically close to singular.</p>
+<p>My opinion: on daily data, use at least a year of history. Then be honest with yourself that the estimate is built on a few weeks of it.</p>
+</section>
+<section id="speed-of-update" class="slide level2">
+<h2>Speed of Update</h2>
+<p>The recursion gives the answer directly. Today’s observation enters <span class="math inline">\sigma_t^2</span> with weight exactly <span class="math inline">(1-\lambda)</span>: 6% at <span class="math inline">\lambda = 0.94</span>, 3% at 0.97, 1% at 0.99.</p>
+<p>Everything already in the estimate is scaled by <span class="math inline">\lambda</span>, so a shock that entered <span class="math inline">k</span> days ago retains <span class="math inline">\lambda^k</span> of the weight it arrived with.</p>
+<p>Put a 5 standard deviation day through it. The squared observation is <span class="math inline">25\sigma^2</span>:</p>
+<p><span class="math display">
+\sigma^2_{\text{new}} = \lambda \sigma^2 + (1-\lambda)\, 25\sigma^2 = \sigma^2\left( \lambda + 25(1-\lambda) \right)
+</span></p>
+</section>
+<section id="the-whole-trade-in-one-table" class="slide level2">
+<h2>The Whole Trade in One Table</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span class="math inline">\lambda</span></th>
+<th style="text-align: right;">Weight today</th>
+<th style="text-align: right;">Volatility after a <span class="math inline">5\sigma</span> day</th>
+<th style="text-align: right;">Half life</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;"><span class="math inline">\times 1.87</span></td>
+<td style="text-align: right;">7 days</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.94</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;"><span class="math inline">\times 1.56</span></td>
+<td style="text-align: right;">11 days</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0.97</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;"><span class="math inline">\times 1.31</span></td>
+<td style="text-align: right;">23 days</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.99</td>
+<td style="text-align: right;">1%</td>
+<td style="text-align: right;"><span class="math inline">\times 1.11</span></td>
+<td style="text-align: right;">69 days</td>
+</tr>
+</tbody>
+</table>
+<p>The same event moves a <span class="math inline">\lambda = 0.90</span> estimate by 87% and a <span class="math inline">\lambda = 0.99</span> estimate by 11%, and the faster estimate then forgets it ten times sooner.</p>
+</section>
+<section id="neither-end-is-right" class="slide level2">
+<h2>Neither End Is Right</h2>
+<p>A fast <span class="math inline">\lambda</span> tracks a regime change within a week and produces limit breaches on days when nothing happened.</p>
+<p>A slow <span class="math inline">\lambda</span> is stable and will still be reporting last month’s calm in the middle of a crisis.</p>
+<p>Pick based on what the number is for. A risk limit that triggers trading wants responsiveness. A capital calculation wants stability.</p>
+<p>Whatever you pick, say what it is. An unstated <span class="math inline">\lambda</span> makes two volatility numbers incomparable even when they were computed from the same returns.</p>
+</section>
+<section id="the-link-to-garch" class="slide level2">
+<h2>The Link to GARCH</h2>
+<p><span class="math display">
+\sigma_t^2 = \omega + \sum_{i=1}^{p} \alpha_i \epsilon_{t-i}^2 + \sum_{i=1}^{q} \beta_i \sigma_{t-i}^2
+</span></p>
+<p>Set <span class="math inline">(p,q) = (1,1)</span>, <span class="math inline">\omega = 0</span>, <span class="math inline">\alpha = (1-\lambda)</span>, and <span class="math inline">\beta = \lambda</span>.</p>
+<p>The RiskMetrics estimator is a GARCH(1,1) sitting exactly on the <span class="math inline">\alpha + \beta = 1</span> boundary.</p>
+</section>
+<section id="what-the-boundary-costs" class="slide level2">
+<h2>What the Boundary Costs</h2>
+<p>With <span class="math inline">\alpha + \beta = 1</span> the long term variance is undefined.</p>
+<p>There is no level to revert to, so the <span class="math inline">k</span> step ahead forecast is today’s variance repeated forever, and any simulation that keeps updating will wander without bound.</p>
+<p>Do not use long horizon simulation that updates the covariance matrix each period with this methodology.</p>
+</section>
+<section id="what-the-boundary-buys" class="slide level2">
+<h2>What the Boundary Buys</h2>
+<p>GARCH with <span class="math inline">\alpha + \beta &lt; 1</span> mean reverts to a fixed level, so when volatility shifts to a genuinely new regime the model fights the shift. The forecast keeps decaying back toward the old level.</p>
+<p>The exponentially weighted estimator has no old level to decay toward, so it absorbs the shift permanently.</p>
+<p>Clustered spikes are what GARCH was built to describe. Persistent level shifts are what the exponentially weighted estimator handles better.</p>
+</section>
+<section id="lamoureux-and-lastrapes" class="slide level2">
+<h2>Lamoureux and Lastrapes</h2>
+<p>Lamoureux and Lastrapes (1990) make the point from the other direction.</p>
+<p>Ignoring structural breaks in the unconditional variance biases the estimated <span class="math inline">\alpha + \beta</span> upward toward 1.</p>
+<p>So the persistence of 0.95 to 0.99 typically fitted on daily equity data is partly an artifact of regime shifts the model does not represent.</p>
+</section>
+<section id="how-much-this-buys" class="slide level2">
+<h2>How Much This Buys</h2>
+<p>Neither estimator observes the regime.</p>
+<p>Both learn only through squared returns, at speed <span class="math inline">\alpha</span> for GARCH and <span class="math inline">(1-\lambda)</span> for the exponentially weighted estimator. Typical values are 0.05 to 0.10 against 0.06.</p>
+<p>The advantage is in the forecast, not in the detection. The same refusal to revert also means a one off spike stays in the estimate long after it should have gone.</p>
+</section></section>
+<section>
+<section id="dealing-with-non-psd-matrices" class="title-slide slide level1 center">
+<h1>Dealing with Non-PSD Matrices</h1>
+
+</section>
+<section id="two-reasons" class="slide level2">
+<h2>Two Reasons</h2>
+<ol type="1">
+<li>Floating point error</li>
+<li>Missing data</li>
+</ol>
+<p>A true PSD matrix can still produce a slightly negative eigenvalue in finite precision, which makes one of the root diagonals complex.</p>
+<p>It is generally fine to check for and set to 0 slightly negative values before attempting the square root. Negative values too large to be floating point error need different treatment.</p>
+</section>
+<section id="a-question-of-magnitude" class="slide level2">
+<h2>A Question of Magnitude</h2>
+<p>There is no clean threshold.</p>
+<p>An eigenvalue at <span class="math inline">-10^{-16}</span> times the largest eigenvalue is arithmetic.</p>
+<p>An eigenvalue at <span class="math inline">-0.05</span> times the largest is a statement that the data are mutually inconsistent, and zeroing it silently changes the matrix.</p>
+</section>
+<section id="rebonato-and-jackel" class="slide level2">
+<h2>Rebonato and Jackel</h2>
+<p>Rebonato and Jackel (1999) present two methods for finding an acceptable PSD matrix. The spectral decomposition method is the straightforward one.</p>
+<p>First, decompose the correlation matrix:</p>
+<p><span class="math display">
+C S = S \Lambda, \quad \Lambda = \operatorname{diag}(\lambda_i)
+</span></p>
+<p>Second, clip the eigenvalues:</p>
+<p><span class="math display">
+\Lambda' : \lambda_i' = \max(\lambda_i, 0)
+</span></p>
+</section>
+<section id="rescaling" class="slide level2">
+<h2>Rescaling</h2>
+<p>Third, construct the diagonal scaling matrix</p>
+<p><span class="math display">
+T : t_i = \left[ \sum_{j=1}^{n} s_{i,j}^2 \lambda_j' \right]^{-1}, \quad T = \operatorname{diag}(t_i)
+</span></p>
+<p><span class="math inline">T</span> is what restores the unit diagonal. Zeroing eigenvalues shrinks the rows, and without the rescaling the result would no longer be a correlation matrix.</p>
+<p><span class="math display">
+B = \sqrt{T}\, S\, \sqrt{\Lambda'}, \qquad BB^T = \hat{C} \approx C
+</span></p>
+<p>where <span class="math inline">\sqrt{\ }</span> denotes the element wise square root.</p>
+</section>
+<section id="good-enough-not-closest" class="slide level2">
+<h2>Good Enough, Not Closest</h2>
+<p>This matrix is not necessarily the closest matrix to the original, by whatever definition of closest you choose.</p>
+<p>It is a good starting point, and often it is good enough.</p>
+<p>Rebonato and Jackel also present an optimization algorithm in their paper, which we do not cover.</p>
+</section>
+<section id="higham" class="slide level2">
+<h2>Higham</h2>
+<p>Higham (2002) presents an iterative algorithm for finding the nearest PSD correlation matrix. This method is used widely.</p>
+<p>Find <span class="math inline">A</span> minimizing</p>
+<p><span class="math display">
+\gamma(A) = \|A - C\|
+</span></p>
+<p>subject to <span class="math inline">A</span> being PSD. The norm used is generally Frobenius:</p>
+<p><span class="math display">
+\|A\|_F = \sqrt{\sum_{i=1}^{n} \sum_{j=1}^{n} a_{i,j}^2}
+</span></p>
+</section>
+<section id="weights" class="slide level2">
+<h2>Weights</h2>
+<p>Weights can be applied by two methods. We assume a diagonal weight matrix <span class="math inline">W</span>, and unweighted means <span class="math inline">W = I</span>.</p>
+<p><span class="math display">
+\|A\|_W = \left\| W^{\frac{1}{2}} A\, W^{\frac{1}{2}} \right\|_F
+</span></p>
+<p>Higham proposes Algorithm 3.3, which alternates two projections until the norm converges.</p>
+</section>
+<section id="the-first-projection" class="slide level2">
+<h2>The First Projection</h2>
+<p><span class="math display">
+P_U(A) = A - W^{-1} \operatorname{diag}(\theta_i) W^{-1}
+</span></p>
+<p>where <span class="math inline">\theta</span> solves <span class="math inline">\left( W^{-1} \# W^{-1} \right)\theta = \operatorname{diag}(A - I)</span>, and # is element wise multiplication.</p>
+<p>With <span class="math inline">W</span> diagonal this collapses to</p>
+<p><span class="math display">
+p_{i,j} = a_{i,j}\ \ \forall\ i \neq j, \qquad p_{i,j} = 1\ \ \forall\ i = j
+</span></p>
+<p><span class="math inline">P_U</span> is the easy projection. It sets the diagonal back to 1 and leaves everything else alone.</p>
+</section>
+<section id="the-second-projection" class="slide level2">
+<h2>The Second Projection</h2>
+<p><span class="math display">
+P_S(A) = W^{\frac{-1}{2}}\left( \left( W^{\frac{1}{2}} A\, W^{\frac{1}{2}} \right)_{+} \right) W^{\frac{-1}{2}}
+</span></p>
+<p><span class="math display">
+(A)_{+} = S \operatorname{diag}(\max(\lambda_i, 0)) S^T
+</span></p>
+<p>The eigenvalue system with negative eigenvalues set to 0. The same clip as Rebonato and Jackel, without the rescaling.</p>
+</section>
+<section id="why-alternate" class="slide level2">
+<h2>Why Alternate</h2>
+<p>Neither projection alone gives a correlation matrix.</p>
+<p><span class="math inline">P_S</span> makes the matrix PSD and breaks the unit diagonal.</p>
+<p><span class="math inline">P_U</span> fixes the diagonal and can break the PSD property.</p>
+<p>Alternating between them converges to a matrix in both sets.</p>
+</section>
+<section id="the-algorithm-1" class="slide level2">
+<h2>The Algorithm</h2>
+<blockquote>
+<p><span class="math inline">\Delta S_0 = 0,\ \ Y_0 = A,\ \ \gamma_0 = \max\ \text{Float}</span></p>
+<p><span class="math inline">\text{Loop } k \in 1 \dots \max\ \text{Iterations}</span></p>
+<p><span class="math inline">\quad R_k = Y_{k-1} - \Delta S_{k-1}</span></p>
+<p><span class="math inline">\quad X_k = P_S(R_k)</span></p>
+<p><span class="math inline">\quad \Delta S_k = X_k - R_k</span></p>
+<p><span class="math inline">\quad Y_k = P_U(X_k)</span></p>
+<p><span class="math inline">\quad \gamma_k = \gamma(Y_k)</span></p>
+<p><span class="math inline">\quad \text{if } |\gamma_k - \gamma_{k-1}| &lt; tol \text{ then break}</span></p>
+</blockquote>
+</section>
+<section id="the-dykstra-correction" class="slide level2">
+<h2>The Dykstra Correction</h2>
+<p>The <span class="math inline">\Delta S</span> term is what makes this work.</p>
+<p>Plain alternating projections converge to some point in the intersection of the two sets.</p>
+<p>The correction is what makes the limit the nearest one.</p>
+</section>
+<section id="in-practice" class="slide level2">
+<h2>In Practice</h2>
+<p>Check the smallest eigenvalue of the result. If it is significantly negative, run the algorithm on the result.</p>
+<p>You need a result your Cholesky function can process.</p>
+<p>Convergence of the norm is not the same as the answer being usable, and the tolerance you set on <span class="math inline">\gamma</span> says nothing directly about the smallest eigenvalue.</p>
+<p>Check the eigenvalue, not the norm.</p>
+</section></section>
+<section>
+<section id="principal-component-analysis" class="title-slide slide level1 center">
+<h1>Principal Component Analysis</h1>
+
+</section>
+<section id="another-route-to-l" class="slide level2">
+<h2>Another Route to L</h2>
+<p>PCA gives us another way to simulate a system.</p>
+<p>The Rebonato and Jackel methodology used to adjust a non-PSD matrix is simply PCA, removing the negative eigenvalues.</p>
+<p>PCA projects the system into an orthogonal space. It gives a linear transform of independent random variables into a correlated multivariate distribution.</p>
+<p>It is also the standard tool for reducing the dimensionality of the problem.</p>
+</section>
+<section id="the-decomposition" class="slide level2">
+<h2>The Decomposition</h2>
+<p><span class="math display">
+C = S \Lambda S^T
+</span></p>
+<p><span class="math inline">S</span> are the eigenvectors, <span class="math inline">\Lambda</span> is the diagonal matrix of eigenvalues.</p>
+<p>Take the square root of the eigenvalues into <span class="math inline">\Lambda^{\frac{1}{2}}</span>:</p>
+<p><span class="math display">
+C = \left[ S \Lambda^{\frac{1}{2}} \right]\left[ \Lambda^{\frac{1}{2}} S^T \right]
+</span></p>
+<p><span class="math display">
+B = \left[ S \Lambda^{\frac{1}{2}} \right] \Rightarrow C = BB^T
+</span></p>
+</section>
+<section id="nothing-downstream-changes" class="slide level2">
+<h2>Nothing Downstream Changes</h2>
+<p>The requirement has not changed:</p>
+<p><span class="math display">
+X = LZ + \mu, \qquad Z_i \sim N(0,1), \qquad \Sigma = LL'
+</span></p>
+<p><span class="math inline">B</span> satisfies that last line, so set <span class="math inline">L = B</span> and the multivariate draw algorithm runs unchanged.</p>
+<p>Cholesky and PCA are two ways of answering the same question. Nothing about the simulation cares which one produced the root.</p>
+<p>The Cholesky is preferred for a full rank system. Being triangular, it takes fewer floating point operations.</p>
+</section>
+<section id="dimensionality-reduction" class="slide level2">
+<h2>Dimensionality Reduction</h2>
+<p>If the matrix is PSD there are <span class="math inline">m</span> non-zero eigenvalues, with <span class="math inline">m \leq n</span>.</p>
+<p>Drop the zero eigenvalues from <span class="math inline">\Lambda</span> and the corresponding columns from <span class="math inline">S</span>.</p>
+<p>To simulate <span class="math inline">N</span> values we now generate only <span class="math inline">M</span> random numbers.</p>
+<p>This is the same rank deficiency as the zero columns in the Cholesky, handled explicitly rather than patched. Both produce a valid <span class="math inline">\Sigma = BB'</span>. Neither recovers information that was never in the matrix.</p>
+</section>
+<section id="variance-explained" class="slide level2">
+<h2>Variance Explained</h2>
+<p>Sort the <span class="math inline">m</span> non-zero eigenvalues largest to smallest:</p>
+<p><span class="math display">
+L = \left[ \lambda_1,\ \lambda_2,\ \dots,\ \lambda_m \right] \ \forall\ \lambda_i \geq \lambda_j,\ i &lt; j
+</span></p>
+<p>The percentage of variance explained by the first <span class="math inline">K</span>:</p>
+<p><span class="math display">
+\text{Pct Explained}(K) = \frac{\sum_{i=1}^{K} L_i}{\sum_{j=1}^{m} L_j}
+</span></p>
+<p>The larger the eigenvalue, the more impact it has on the total system.</p>
+</section>
+<section id="dropping-is-a-modeling-choice" class="slide level2">
+<h2>Dropping Is a Modeling Choice</h2>
+<p>Not a repair.</p>
+<p>Every dropped component is a direction the simulation can no longer move in.</p>
+<p>The forecast variance of any portfolio sitting in that direction is exactly zero.</p>
+<p>Week 09 shows what that looks like when it goes wrong.</p>
+</section></section>
+<section>
+<section id="simulating-from-models" class="title-slide slide level1 center">
+<h1>Simulating from Models</h1>
+
+</section>
+<section id="running-week-02-backwards" class="slide level2">
+<h2>Running Week 02 Backwards</h2>
+<p>At the heart of most modeling is getting to an error variable that is independent and identically distributed.</p>
+<p>Every model in Week 02 existed to strip structure out of a series until what was left satisfied the OLS error assumptions.</p>
+<p>Here we run the same machinery backwards: simulate the iid errors, then push them through the model to rebuild the series.</p>
+</section>
+<section id="the-setup" class="slide level2">
+<h2>The Setup</h2>
+<p><span class="math inline">n</span> variables <span class="math inline">X</span>, an information matrix <span class="math inline">\Omega</span> used for modeling, and normally distributed errors <span class="math inline">\epsilon</span>.</p>
+<p><span class="math display">
+x_{i,t} = f_i\left( \Omega_t,\ \epsilon_{i,t} \right)
+</span></p>
+<p>Because <span class="math inline">\epsilon_i \sim N(0, \sigma_i^2)\ iid</span>, the system of errors is jointly normal:</p>
+<p><span class="math display">
+\epsilon \sim N(0, \Sigma)
+</span></p>
+<p>The models are separate but the errors are not. Two stocks each carrying their own ARMA still move together, and <span class="math inline">\Sigma</span> is where that co-movement lives.</p>
+</section>
+<section id="if-we-know-omega" class="slide level2">
+<h2>If We Know Omega</h2>
+<ol type="1">
+<li>Simulate <span class="math inline">m</span> draws for <span class="math inline">n</span> error terms</li>
+<li>For each draw, evaluate the set of functions to create the simulated <span class="math inline">X</span></li>
+</ol>
+<p>If we do not know all elements of <span class="math inline">\Omega_t</span>, then either simulate them through their own model, or assume a value for them.</p>
+</section>
+<section id="ordering-the-models" class="slide level2">
+<h2>Ordering the Models</h2>
+<p>Often some <span class="math inline">x_i</span> depends on other elements of <span class="math inline">X</span>. Order the models so the independent ones are evaluated first.</p>
+<ol type="1">
+<li>Models without dependencies on <span class="math inline">X</span> first</li>
+<li>Remaining models ordered so dependencies are evaluated earlier</li>
+<li>Simulate <span class="math inline">m</span> draws for <span class="math inline">n</span> error terms</li>
+<li>Evaluate the models in order</li>
+</ol>
+<p>A circular pattern, where A depends on B, which depends on C, which depends on A, needs an iterative solver. We do not deal with it in this class.</p>
+
+</section></section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="week03-slides_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="week03-slides_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="week03-slides_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="week03-slides_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="week03-slides_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="week03-slides_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="week03-slides_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="week03-slides_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="week03-slides_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'none',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1280,
+
+        height: 800,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>

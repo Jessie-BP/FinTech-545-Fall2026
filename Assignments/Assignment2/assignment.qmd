@@ -1,0 +1,271 @@
+---
+title: "Assignment 2 — Covariance, VaR, and Copulas"
+subtitle: "FinTech 545 --- Quantitative Risk Management"
+author: "Dominic Pazzula"
+format:
+  pdf:
+    output-file: "Assignment 2.pdf"
+    documentclass: scrartcl
+    pdf-engine: lualatex
+    geometry: margin=1in
+    fig-pos: 'H'
+    include-in-header:
+      text: |
+        \usepackage{float}
+        \usepackage{needspace}
+        \usepackage{etoolbox}
+        % Tables here are all short. Without this, longtable can place its
+        % header at the bottom of a page, break, and repeat the header on the
+        % next page with no rows under it. Require room for a few lines first.
+        \AtBeginEnvironment{longtable}{\Needspace*{8\baselineskip}}
+    number-sections: true
+    toc: false
+  html:
+    output-file: "Assignment 2.html"
+    toc: true
+    html-math-method: katex
+---
+
+# Instructions {.unnumbered}
+
+Be verbose. Explain clearly your reasoning, methods, and results in your written
+work. Write clear code that is well documented. With 99% certainty, you cannot
+write too many code comments.
+
+Written answers are worth 8 points. Code is worth 2 points. 10 points total.
+
+1. When finished, respond to the question in Canvas as "done." We will record
+   your grade there.
+2. In your code repository, create a folder called "Assignment2."
+3. In that folder, include
+
+   a. a document (PDF) with your responses.
+   b. All code.
+   c. A README file with instructions for us to run your code.
+
+Data for the problems is in the CSV files alongside this document in the class
+repository.
+
+This assignment covers Weeks 1 through 5, with most of the weight on Weeks 3, 4,
+and 5. Expect to use the earlier weeks throughout. Moments, distribution fitting,
+AICc, and the portfolio variance formula all come back.
+
+Unless a problem says otherwise, VaR and ES are at $\alpha = 5\%$ and are reported
+as positive numbers for a loss.
+
+## How These Problems Are Graded {.unnumbered}
+
+Every problem below is in three parts, and the middle part is the one you are
+most likely to skip.
+
+1. **Predict** -- look at the data, or a plot of it, and say what you expect and
+   why. Do this before you fit anything.
+2. **Fit** -- run the models.
+3. **Reconcile** -- say whether the fit agreed with you. If it did not, say what
+   you had missed.
+
+Most of the written credit sits on parts 1 and 3. Correct code with no reasoning
+attached does not earn full marks. A wrong prediction, honestly reported and then
+explained, earns nearly all of them. There are no points deducted for wrong
+predictions. We are grading whether you understand what the numbers mean, not
+whether you can call a library function.
+
+# Correlations from Mismatched Histories (1.5 points)
+
+`problem1.csv` holds 250 days of returns for four stocks, `A` through `D`, and an
+index, `IDX`. A blank cell means the asset did not trade that day. `A` and `B`
+share a calendar. `C` trades on a foreign calendar with more holidays. `D` listed
+partway through the sample. The index trades every day.
+
+`IDX` is built from the four stocks with fixed weights of 0.40, 0.30, 0.20, and
+0.10 on `A`, `B`, `C`, and `D`. It does not match that basket exactly, so there is a
+small tracking error.
+
+**Predict.** Build a table of how many days each pair of series is jointly
+observed, and count the days on which all five trade. Then answer, before
+computing any correlation:
+
+a. We can build the correlation matrix from the complete rows only, or pairwise.
+   Which of the two can return a matrix that is not PSD, and why? Which is
+   guaranteed PSD?
+b. `IDX` is almost a linear combination of the other four. What does that imply
+   for the smallest eigenvalue of the true correlation matrix? Using that, say how
+   exposed this particular data set is to the failure in part (a).
+c. Which correlations do you expect to be the least reliable, and why?
+
+**Fit.**
+
+d. Compute the complete case and the pairwise correlation matrices, and the
+   eigenvalues of each. Attempt a Cholesky factorization of each and report what
+   happens.
+e. Build a covariance matrix from the pairwise correlations and the full history
+   standard deviation of each series. Compute the variance of the portfolio that
+   is long one unit of `IDX` and short the weighted basket. Report it.
+f. Repair the pairwise correlation matrix with Rebonato and Jackel and with
+   Higham. For each, report the smallest eigenvalue and the Frobenius distance
+   from the pairwise matrix. Recompute the tracking portfolio variance from part
+   (e).
+
+**Reconcile.**
+
+g. Explain the result in part (e) in terms of the definition of positive
+   semi-definiteness from Week 2.
+h. Which entries did the Higham repair move the most? Compare that with your answer
+   to part (c). The repair was not told how many days sit behind each entry. What
+   is it using to decide where to make the change?
+i. Compare the size of the repair with the size of the gap between the complete
+   case and pairwise matrices. Which of the two decisions matters more for this
+   data, the choice of estimator or the choice of repair?
+
+# A Volatility Estimate After the Regime Changed (1.5 points)
+
+`problem2.csv` holds 501 daily prices for one stock. You hold \$1,000,000 of it.
+
+**Predict.** Compute arithmetic returns and remove the sample mean. Plot the
+returns.
+
+a. Before computing any VaR, rank these five one day VaR estimates from smallest
+   to largest, and say why you expect that order.
+   1. Normal, with the equally weighted standard deviation.
+   2. Normal, with an exponentially weighted standard deviation at $\lambda = 0.97$.
+   3. Normal, with an exponentially weighted standard deviation at $\lambda = 0.94$.
+   4. A Student's $t$ fitted by maximum likelihood.
+   5. Historical simulation over the full sample.
+b. For $\lambda = 0.94$ and $\lambda = 0.97$, compute the effective sample size and
+   the half life. Estimate from your plot how many recent days look different from
+   the rest, and compute the fraction of the total weight each $\lambda$ places on
+   those days.
+c. Compute the first four moments of the full sample. Predict whether a single
+   regime of normally distributed returns could produce them.
+
+**Fit.**
+
+d. Compute the five VaR estimates in dollars. Report the fitted $t$ parameters.
+
+**Reconcile.**
+
+e. Compare the result with your ranking. Explain any estimate that landed somewhere
+   you did not expect.
+f. Compute the standard deviation of the returns inside each regime you identified
+   in part (b). Use those to explain the excess kurtosis you found in part (c).
+   What is the fitted $t$ actually describing?
+g. Week 3 gives the standard error of an exponentially weighted volatility estimate
+   as roughly $\sigma / \sqrt{2 n_{\text{eff}}}$. Is the gap between the two
+   exponentially weighted VaRs larger than that noise? Which $\lambda$ would you use
+   for a trading limit, and which for a capital number? Label your answer as an
+   opinion where it is one.
+
+# When Diversification Raises VaR (1.5 points)
+
+`problem3.csv` holds 10,000 simulated one year return scenarios for two bonds, `A`
+and `B`. Each bond is bought at 90 and pays 100 at the end of the year unless it
+defaults. You have \$2,000,000 to invest, and you are choosing between putting all
+of it in `A` and putting \$1,000,000 in each.
+
+**Predict.** Plot the P&L distribution of both choices.
+
+a. Compute the first four moments of each bond. What do they tell you about a
+   normal VaR on these positions?
+b. Count the scenarios in which each bond loses more than 20%, and the scenarios in
+   which at least one of the two does. Before computing any risk measure, predict
+   whether the diversified choice has a larger or a smaller VaR than the
+   concentrated one, and the same for ES. Use the counts to justify both answers.
+
+**Fit.**
+
+c. Compute historical VaR and ES for \$1,000,000 in `A`, \$1,000,000 in `B`,
+   \$2,000,000 in `A`, and \$1,000,000 in each.
+d. Compute a normal VaR for the same positions, from the sample mean and standard
+   deviation of each P&L.
+e. Repeat part (c) at $\alpha = 1\%$.
+
+**Reconcile.**
+
+f. Check subadditivity for VaR and for ES at 5%, using the two \$1,000,000
+   positions and their combination. Explain the mechanism behind the result.
+g. The normal VaR says diversification helps. Which choice does it favour, and is
+   it right for the right reason?
+h. At 1% the VaR result changes. Explain why, and what that says about when VaR's
+   failure shows up.
+
+# Gaussian or $t$ Copula (2 points)
+
+`problem4.csv` holds 1,000 days of returns for three assets, `X1` through `X3`. You
+hold \$1,000,000 of each.
+
+**Predict.**
+
+a. Compute the first four moments of each series. From them alone, which
+   distribution would you fit to each margin? If one number looks out of place,
+   check how much it depends on a single observation.
+b. Convert each series to ranks scaled into $(0,1)$ and plot every pair. Then count,
+   for each pair, the days both series sit in their own worst 2.5%, and separately
+   the days both sit in their own best 2.5%. How many days would you expect under
+   independence? Do the plots and the counts suggest the joint tails are more
+   connected than the middle of the distribution? Predict which copula will win.
+
+**Fit.**
+
+c. Fit a normal and a $t$ to each margin and choose between them with AICc.
+d. Transform each series to uniforms through its fitted margin. Estimate $R$ from
+   Kendall's $\tau$ and fit a Gaussian and a $t$ copula. Report the log likelihood,
+   $\hat{\nu}$, AICc, and BIC for each.
+e. Simulate 100,000 days from each copula through the fitted margins. Report VaR and
+   ES at 5% and at 1% for the portfolio under each copula, and historically.
+f. From each simulation, compute the number of joint tail days from part (b) the
+   copula implies over 1,000 days.
+
+**Reconcile.**
+
+g. Which copula wins, and by how much? Compare the implied joint tail counts from
+   part (f) with the data.
+h. Switching copulas moves one of the four portfolio risk numbers much more than
+   the others. Which one, and why does the 5% VaR barely move?
+i. Compute each day's contribution to $\ell_t - \ell_{\text{Gauss}}$. How much of
+   the total comes from days where no series sits in its outer 5% on either side?
+   What does that tell you about what the information criterion is scoring?
+j. Compute the tail dependence coefficient for the most correlated pair under the
+   fitted $t$ copula. What is it under the Gaussian?
+
+# Model Based Simulation and Residual Correlation (1.5 points)
+
+`problem5.csv` holds 501 daily prices for a market index, `MKT`, and two stocks, `A`
+and `B`. Assume zero expected returns. You are asked for the VaR of two portfolios:
+
+- `P1`: long \$1,000,000 of `A` and long \$1,000,000 of `B`.
+- `P2`: long \$1,000,000 of `A` and short \$1,000,000 of `B`.
+
+We model each stock's arithmetic return as $r_i = \alpha_i + \beta_i r_{MKT} +
+\epsilon_i$, with the market and the errors normally distributed.
+
+**Predict.**
+
+a. A common shortcut treats $\epsilon_A$ and $\epsilon_B$ as independent of each
+   other. If the two stocks share an industry the market does not capture, is that
+   shortcut going to overstate or understate the VaR of `P1`? Of `P2`? Answer with
+   the portfolio variance formula from Week 2, before fitting anything.
+
+**Fit.**
+
+b. Compute returns and run both regressions. Report $\alpha$, $\beta$, the residual
+   standard deviations, and the correlation between the residuals.
+c. Simulate 100,000 days of the market and the two errors, once with the full
+   residual covariance matrix and once with its off diagonal set to zero. Build the
+   stock returns through the fitted betas and report the VaR of both portfolios
+   under both assumptions.
+d. Compute a delta normal VaR for both portfolios directly from the sample
+   covariance matrix of the two stock returns.
+
+**Reconcile.**
+
+e. Did the shortcut move each portfolio in the direction you predicted? Which
+   portfolio is more exposed to the assumption, and why?
+f. Compare the full residual covariance VaR with the delta normal VaR from part (d).
+   Explain the result using what Week 5 says about OLS and the joint normal. When
+   would the two stop agreeing?
+
+# Code (2 points)
+
+Your code is graded on whether we can run it and whether we can follow it. Include
+a README with the commands to reproduce every number in your write up. Comment the
+non-obvious steps, particularly anywhere you chose one convention over another.

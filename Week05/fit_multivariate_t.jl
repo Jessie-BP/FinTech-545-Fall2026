@@ -18,9 +18,9 @@ using JuMP
 using Ipopt
 using Printf
 
-include("../Week04/return_calculate.jl")
-include("fitted_model.jl")
-include("simulate.jl")
+include("../library/return_calculate.jl")
+include("../library/fitted_model.jl")
+include("../library/simulate.jl")
 include("../library/multivariate_t.jl")
 
 stocks = ["SPY", "AAPL", "MSFT", "JPM", "XOM"]
@@ -60,25 +60,12 @@ end
 minEig = min_eigenvalue(R)
 if minEig < -1e-8
     @printf("R is not PSD (min eigenvalue %.6f). Repairing.\n", minEig)
+    R = fix_correlation(R)
 else
     @printf("\nR is PSD. Min eigenvalue %.4f\n", minEig)
 end
 
-R = fix_correlation(R)
 
-println("\nR from Kendall's tau")
-@printf("  %-6s", "")
-for s in stocks
-    @printf("%9s", s)
-end
-println()
-for i in 1:n
-    @printf("  %-6s", stocks[i])
-    for j in 1:n
-        j < i ? @printf("%9.3f", R[i, j]) : @printf("%9s", "")
-    end
-    println()
-end
 
 # --- Step 3: profile nu ---------------------------------------------------
 # A multivariate t carries a scale matrix, not a covariance. cov = nu/(nu-2)*S,

@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="week05-slides_files/libs/clipboard/clipboard.min.js"></script>
+<script src="week05-slides_files/libs/quarto-html/tabby.min.js"></script>
+<script src="week05-slides_files/libs/quarto-html/popper.min.js"></script>
+<script src="week05-slides_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="week05-slides_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="week05-slides_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="week05-slides_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.18">
+
+  <meta name="author" content="Dominic Pazzula">
+  <title>Expected Shortfall and Copulas</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="week05-slides_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="week05-slides_files/libs/revealjs/dist/reveal.css">
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="week05-slides_files/libs/revealjs/dist/theme/quarto-2740581606dc327e82f18f789b69d8a0.css">
+  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
+  <link href="week05-slides_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="week05-slides_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="week05-slides_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="week05-slides_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Expected Shortfall and Copulas</h1>
+  <p class="subtitle">FinTech 545 — Week 05</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Dominic Pazzula
+</div>
+</div>
+</div>
+
+</section>
+<section>
+<section id="expected-shortfall" class="title-slide slide level1 center">
+<h1>Expected Shortfall</h1>
+
+</section>
+<section id="where-week-04-left-off" class="slide level2">
+<h2>Where Week 04 Left Off</h2>
+<p>VaR reads a single point on the loss distribution, so it is blind to everything past that point.</p>
+<p>Diversification can move a bad outcome across the threshold and make the reported risk jump.</p>
+<p>This week fixes both problems, and then fixes the distributional assumption underneath them.</p>
+<aside class="notes">
+<p>The first half of the week replaces the measure. The second half replaces the distribution it is measured on. The second half is the larger idea.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="the-definition" class="slide level2">
+<h2>The Definition</h2>
+<p>Expected shortfall is the expected value of profit and loss given the loss is beyond VaR.</p>
+<p><span class="math display">
+ES(X) = E\left( X\ |\ x \leq -VaR(X) \right)
+</span></p>
+<p>The average of the left tail, where the tail is the values whose CDF is less than or equal to <span class="math inline">\alpha</span>.</p>
+</section>
+<section id="a-note-on-signs" class="slide level2">
+<h2>A Note on Signs</h2>
+<p>The two conventions get mixed constantly.</p>
+<p>The conditional expectation above is a point on the P&amp;L distribution, so it is negative for a loss.</p>
+<p>The formula that follows carries a leading minus sign, which reports ES as a positive loss number, the same convention we used for VaR.</p>
+<p>Both appear in practice. Pick one, state it, and stay with it.</p>
+</section>
+<section id="other-names" class="slide level2">
+<h2>Other Names</h2>
+<ol type="1">
+<li>Conditional VaR, or CVaR</li>
+<li>Average VaR, or AVaR</li>
+<li>Expected Tail Loss, or ETL</li>
+</ol>
+<p>CVaR is the most widely used alternative, but it can mean different things to different people. Ask for a definition when someone uses it.</p>
+</section>
+<section id="computing-it" class="slide level2">
+<h2>Computing It</h2>
+<p>From the PDF and VaR:</p>
+<p><span class="math display">
+ES(X) = -\frac{1}{\alpha} \int_{-\infty}^{-VaR(X)} x\, f(x)\, dx
+</span></p>
+<p>Numerically, given a sample, this is the mean of all values less than or equal to VaR.</p>
+<p>Two lines of code, and no more difficult than VaR was.</p>
+</section>
+<section id="the-normal-case" class="slide level2">
+<h2>The Normal Case</h2>
+<p>ES has closed form solutions for many distributions. Most of what we do is simulation based, so we calculate it numerically, but the normal is worth having.</p>
+<p><span class="math display">
+ES_{\alpha}(X) = -\mu + \sigma \frac{f\left( \Phi^{-1}(\alpha) \right)}{\alpha}
+</span></p>
+<p><span class="math inline">f(x)</span> is the standard normal PDF and <span class="math inline">\Phi^{-1}(\alpha)</span> the standard normal quantile function.</p>
+<p>ES for the normal is a linear function of the standard deviation. Just like VaR.</p>
+</section>
+<section id="the-same-number-scaled" class="slide level2">
+<h2>The Same Number, Scaled</h2>
+<p>At <span class="math inline">\alpha = 0.05</span> the multiplier is <span class="math inline">f(-1.645)/0.05 = 2.063</span>, against <span class="math inline">1.645</span> for VaR.</p>
+<p>Under normality the two measures are the same number scaled by 1.25, and any statement about one is a statement about the other.</p>
+<p>That is a statement about the normal, not about the measures.</p>
+</section>
+<section id="var-and-es-on-a-normal" class="slide level2">
+<h2>VaR and ES on a Normal</h2>
+
+<img data-src="../figures/es-vs-var.png" style="width:88.0%" class="r-stretch quarto-figure-center"><p class="caption">VaR and ES on a standard normal, and how the gap widens as the tail gets heavier</p></section>
+<section id="what-the-panels-show" class="slide level2">
+<h2>What the Panels Show</h2>
+<p>The left panel is the definition. VaR is where the shading starts. ES is the average of what is inside it.</p>
+<p>The right panel is why we bother. For a <span class="math inline">t</span> scaled to the same variance the ratio rises as the tail gets heavier: 1.33 at <span class="math inline">\nu = 10</span>, 1.43 at <span class="math inline">\nu = 5</span>, 1.65 at <span class="math inline">\nu = 3</span>.</p>
+<p>VaR barely moves across that range, because the 5% quantile of a unit variance <span class="math inline">t</span> is close to the normal’s. ES moves, because it is averaging over the part of the distribution that actually changed.</p>
+</section>
+<section id="coherence" class="slide level2">
+<h2>Coherence</h2>
+<p>Coherence is a defined term. Artzner, Delbaen, Eber, and Heath (1999) set out four properties a risk measure <span class="math inline">q</span> should have, writing losses as positive.</p>
+<ol type="1">
+<li><strong>Monotonicity.</strong> If <span class="math inline">X</span> loses at least as much as <span class="math inline">Y</span> in every state, then <span class="math inline">q(X) \geq q(Y)</span></li>
+<li><strong>Subadditivity.</strong> <span class="math inline">q(X + Y) \leq q(X) + q(Y)</span>. Combining positions cannot create risk</li>
+<li><strong>Positive homogeneity.</strong> <span class="math inline">q(\lambda X) = \lambda\, q(X)</span> for <span class="math inline">\lambda \geq 0</span></li>
+<li><strong>Translation invariance.</strong> <span class="math inline">q(X + c) = q(X) - c</span>. Adding cash reduces risk by the amount of cash</li>
+</ol>
+</section>
+<section id="one-row-apart" class="slide level2">
+<h2>One Row Apart</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Property</th>
+<th style="text-align: center;">VaR</th>
+<th style="text-align: center;">ES</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Monotonicity</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Subadditivity</td>
+<td style="text-align: center;">no</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Positive homogeneity</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Translation invariance</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+</tr>
+</tbody>
+</table>
+<p>And it is the row from Week 04.</p>
+</section>
+<section id="the-bond-example-again" class="slide level2">
+<h2>The Bond Example Again</h2>
+<p>Week 04 gave <span class="math inline">q(P_1) + q(P_2) = -20</span> against <span class="math inline">q(P_1 + P_2) = 80</span>.</p>
+<p>Run the same example through ES and the inequality holds, because averaging over the tail sees the 0.16% state where both bonds default.</p>
+<p>VaR never looks past the 5% point.</p>
+</section>
+<section id="convexity" class="slide level2">
+<h2>Convexity</h2>
+<p>Subadditivity is also what makes the surface convex.</p>
+<p>A subadditive and positively homogeneous measure is convex in the portfolio weights, so minimizing ES subject to linear constraints is a convex program with one optimum.</p>
+<p>Minimizing VaR is not, and can have many local minima.</p>
+<p>Week 07 and Week 08 both build optimizations on this.</p>
+</section>
+<section id="why-es-gained-ground" class="slide level2">
+<h2>Why ES Gained Ground</h2>
+<p>It gives a loss expectation instead of a minimum.</p>
+<p>It is more sensitive to the tails than VaR. Fatter tails generally mean larger ES, which is not always true for VaR.</p>
+<p>The Basel framework moved market risk capital from 99% VaR to 97.5% ES for exactly that reason. The two are close under normality, <span class="math inline">2.34\sigma</span> against <span class="math inline">2.33\sigma</span>, and they separate when the tail is heavy, which is when the number matters.</p>
+</section>
+<section id="what-es-costs" class="slide level2">
+<h2>What ES Costs</h2>
+<p>There is a real cost, and it is worth knowing before recommending ES to anyone.</p>
+<p>ES is harder to validate against realized outcomes.</p>
+<p>VaR has a clean test: count the days the loss exceeded it and compare the count to <span class="math inline">\alpha n</span>.</p>
+<p>ES has no equivalent.</p>
+</section>
+<section id="elicitability" class="slide level2">
+<h2>Elicitability</h2>
+<p>Gneiting (2011) showed there is no scoring function whose expected value is minimized by the true ES, which is the property a direct backtest needs.</p>
+<p>Fissler and Ziegel (2016) showed that VaR and ES are jointly elicitable, so ES can be backtested alongside VaR but not on its own.</p>
+<p>My opinion: use ES for optimization and for reporting the size of a tail loss, and keep VaR in the report as the thing you can actually backtest. The two cost the same to compute once the distribution is simulated.</p>
+</section></section>
+<section>
+<section id="model-based-simulation" class="title-slide slide level1 center">
+<h1>Model Based Simulation</h1>
+
+</section>
+<section id="simulating-from-fitted-models" class="slide level2">
+<h2>Simulating from Fitted Models</h2>
+<p>Often we want to simulate from fitted models instead of just a distribution.</p>
+<p><span class="math display">
+y = f(X, \epsilon)
+</span></p>
+<p>That requires distributional assumptions on <span class="math inline">X</span> and <span class="math inline">\epsilon</span>. The easiest assumption is multivariate normal:</p>
+<p><span class="math display">
+[X\ \epsilon] \sim N(\mu, \Sigma)
+</span></p>
+</section>
+<section id="the-ols-case" class="slide level2">
+<h2>The OLS Case</h2>
+<p>If <span class="math inline">f(X,\epsilon)</span> is OLS, then <span class="math inline">X</span> and <span class="math inline">\epsilon</span> are independent and <span class="math inline">E(\epsilon) = 0</span>.</p>
+<p><span class="math display">
+y = X\beta + \epsilon, \qquad X \sim N\left( \mu_X, \Sigma_X \right), \quad \epsilon \sim N\left( 0, \sigma^2 \right)
+</span></p>
+<p><span class="math display">
+[X\ \epsilon] \sim N(\mu, \Sigma), \quad
+\mu = \begin{bmatrix} \mu_X \\ 0 \end{bmatrix}, \quad
+\Sigma = \begin{bmatrix} \Sigma_X &amp; 0 \\ 0 &amp; \sigma^2 \end{bmatrix}
+</span></p>
+</section>
+<section id="read-the-zeros" class="slide level2">
+<h2>Read the Zeros</h2>
+<p><span class="math inline">\Sigma_X</span> is the <span class="math inline">m \times m</span> covariance of the regressors and <span class="math inline">\sigma^2</span> is the scalar residual variance.</p>
+<p>The off diagonal blocks are 0 because assumption 3 of OLS says the regressors are uncorrelated with the error. For two regressors:</p>
+<p><span class="math display">
+\Sigma = \begin{bmatrix}
+\sigma_{x_1}^2 &amp; \sigma_{x_1 x_2} &amp; 0 \\
+\sigma_{x_1 x_2} &amp; \sigma_{x_2}^2 &amp; 0 \\
+0 &amp; 0 &amp; \sigma^2
+\end{bmatrix}
+</span></p>
+<p>This is the Week 03 multivariate draw algorithm with the error term appended to the vector of variables.</p>
+</section>
+<section id="ols-does-not-need-this" class="slide level2">
+<h2>OLS Does Not Need This</h2>
+<ul>
+<li>OLS is a linear function of random normals</li>
+<li>A linear function of random normals is also a random normal</li>
+<li>OLS is the same thing as just using a joint multivariate distribution on <span class="math inline">Y</span> and <span class="math inline">X</span></li>
+</ul>
+</section>
+<section id="the-regression-was-already-inside" class="slide level2">
+<h2>The Regression Was Already Inside</h2>
+<p>From the conditional distributions section of Week 02, given a joint normal on <span class="math inline">[Y\ X]</span>:</p>
+<p><span class="math display">
+\bar{\mu} = \mu_Y + \Sigma_{YX}\Sigma_{XX}^{-1}\left( a - \mu_X \right), \qquad
+\bar{\Sigma} = \Sigma_{YY} - \Sigma_{YX}\Sigma_{XX}^{-1}\Sigma_{XY}
+</span></p>
+<p><span class="math inline">\Sigma_{YX}\Sigma_{XX}^{-1}</span> is <span class="math inline">\hat{\beta}</span> and <span class="math inline">\bar{\Sigma}</span> is the residual variance.</p>
+</section>
+<section id="a-check-not-a-result" class="slide level2">
+<h2>A Check, Not a Result</h2>
+<p>Fit the regression, simulate the pieces, and you get back the joint normal you could have written down at the start.</p>
+<p>It stops being true the moment any piece is not normal.</p>
+<p>That is the whole point of the copula.</p>
+</section>
+<section id="several-dependent-variables" class="slide level2">
+<h2>Several Dependent Variables</h2>
+<p><span class="math display">
+y_i = f(X, \epsilon_i)\ \ \forall\ i \in [1,n], \qquad
+\mathcal{E} = \left[ \epsilon_1,\ \epsilon_2,\ \dots,\ \epsilon_n \right]
+</span></p>
+<p><span class="math display">
+\mathcal{E} \sim N\left( 0, \Sigma_{\epsilon} \right)
+</span></p>
+<p>If all <span class="math inline">X</span> variables are used in each model:</p>
+<p><span class="math display">
+\Sigma = \begin{bmatrix} \Sigma_X &amp; 0 \\ 0 &amp; \Sigma_{\epsilon} \end{bmatrix}
+</span></p>
+<p>The scalar <span class="math inline">\sigma^2</span> has become the <span class="math inline">n \times n</span> matrix <span class="math inline">\Sigma_{\epsilon}</span>. The corner blocks are still 0.</p>
+</section>
+<section id="when-not-all-x-are-used" class="slide level2">
+<h2>When Not All X Are Used</h2>
+<p><span class="math display">
+\Sigma = \operatorname{cov}\left( [X\ \mathcal{E}] \right) =
+\begin{bmatrix} \Sigma_X &amp; \Sigma_{X\epsilon} \\ \Sigma_{X\epsilon}' &amp; \Sigma_{\epsilon} \end{bmatrix}
+</span></p>
+<p>The diagonal elements are the same. The off diagonal elements are no longer necessarily 0.</p>
+<p>In practice it is often easier to calculate the covariance than to construct the block diagonal matrix.</p>
+</section>
+<section id="the-part-that-is-easy-to-forget" class="slide level2">
+<h2>The Part That Is Easy to Forget</h2>
+<p>Each model was fit separately, and each residual series is uncorrelated with its own regressors by construction.</p>
+<p>The residuals of two different models are not uncorrelated with each other.</p>
+<p>Two stocks sharing an industry exposure the market factor did not capture will have residuals that move together, and setting <span class="math inline">\Sigma_{\epsilon}</span> diagonal throws that away.</p>
+<p>Week 09 returns to this as the load bearing assumption of a factor model.</p>
+</section>
+<section id="a-distribution-is-a-model" class="slide level2">
+<h2>A Distribution Is a Model</h2>
+<p>A distributional assumption about a variable is a model. Assuming <span class="math inline">y \sim N\left( \mu, \sigma_{\epsilon}^2 \right)</span>:</p>
+<p><span class="math display">
+y = f(X, \epsilon) = \mu + \sigma_{\epsilon} z, \qquad z \sim N(0,1)
+</span></p>
+<p>There is no <span class="math inline">X</span> in that model, which is the point.</p>
+<p>A variable we assume a distribution for and a variable we regress on three factors both end up as a function of an iid error. The simulation machinery does not distinguish them, and that is what lets the next section mix them freely.</p>
+</section></section>
+<section>
+<section id="copulas" class="title-slide slide level1 center">
+<h1>Copulas</h1>
+
+</section>
+<section id="the-problem" class="slide level2">
+<h2>The Problem</h2>
+<p>Not all financial data are normally distributed. Some are close enough and others are not.</p>
+<p>The problem is specific. Fitting a <span class="math inline">t</span> to one stock and a normal to another is easy.</p>
+<p>Fitting a joint distribution whose first margin is <span class="math inline">t</span> and whose second is normal is not, because no standard multivariate family has margins from different families.</p>
+<p>Everything in Weeks 02 and 03 assumed one <span class="math inline">\Sigma</span> over one multivariate normal.</p>
+</section>
+<section id="what-a-copula-is" class="slide level2">
+<h2>What a Copula Is</h2>
+<p>Copulas are multivariate cumulative distribution functions whose marginal distributions are uniform on <span class="math inline">[0,1]</span>.</p>
+<p>They combine variables with different assumed distributions.</p>
+</section>
+<section id="the-mechanism" class="slide level2">
+<h2>The Mechanism</h2>
+<p>The inverse CDF method from Week 03, run in both directions.</p>
+<p>The CDF maps any distribution onto <span class="math inline">[0,1]</span>. The quantile function maps <span class="math inline">[0,1]</span> back onto any other.</p>
+<p>Between those two steps the marginal distribution has been stripped out, and what remains is the dependence structure alone.</p>
+</section>
+<section id="sklars-theorem" class="slide level2">
+<h2>Sklar’s Theorem</h2>
+<p>Every multivariate CDF of a random vector <span class="math inline">X</span></p>
+<p><span class="math display">
+H\left( x_1,\ \dots,\ x_n \right) = P\left( X_1 \leq x_1,\ \dots,\ X_n \leq x_n \right)
+</span></p>
+<p>can be expressed in terms of its marginals <span class="math inline">F_i(x_i) = P(X_i \leq x_i)</span> and some copula <span class="math inline">C</span>:</p>
+<p><span class="math display">
+H\left( x_1,\ \dots,\ x_n \right) = C\left( F_1\left( x_1 \right),\ \dots,\ F_n\left( x_n \right) \right)
+</span></p>
+<p>Recognize that <span class="math inline">F_i(x_i) \in [0,1]</span>, and that <span class="math inline">F_i</span> need not be the same distribution as <span class="math inline">F_j</span>.</p>
+</section>
+<section id="what-sklar-says" class="slide level2">
+<h2>What Sklar Says</h2>
+<p>Something stronger than it first appears.</p>
+<p>Any joint distribution can be split into margins and a copula, and for continuous margins the split is unique.</p>
+<p>So the choice of copula and the choice of margins are two independent modeling decisions.</p>
+<p>Getting one right does nothing to protect you from getting the other wrong.</p>
+</section></section>
+<section>
+<section id="the-gaussian-copula" class="title-slide slide level1 center">
+<h1>The Gaussian Copula</h1>
+
+</section>
+<section id="the-construction" class="slide level2">
+<h2>The Construction</h2>
+<p>Given a correlation matrix <span class="math inline">R</span>:</p>
+<p><span class="math display">
+C_R(X) = \Phi_R\left( \Phi^{-1}\left( F_1\left( x_1 \right) \right),\ \dots,\ \Phi^{-1}\left( F_n\left( x_n \right) \right) \right)
+</span></p>
+<p><span class="math inline">\Phi^{-1}(x)</span> is the standard normal quantile function and <span class="math inline">\Phi_R(X)</span> is the multivariate normal CDF given correlation <span class="math inline">R</span>.</p>
+<p>These are all functions we have worked with, which makes <span class="math inline">R</span> very simple to fit.</p>
+</section>
+<section id="what-it-does-and-does-not-assume" class="slide level2">
+<h2>What It Does and Does Not Assume</h2>
+<p>The dependence structure is the one a multivariate normal would have.</p>
+<p>The marginal distributions are whatever we fit, and they are not normal.</p>
+</section>
+<section id="fitting-the-copula" class="slide level2">
+<h2>Fitting the Copula</h2>
+<ol type="1">
+<li>For each variable <span class="math inline">i \in 1 \dots n</span>:
+<ol type="a">
+<li>Transform <span class="math inline">X_i</span> into a uniform vector <span class="math inline">U_i</span> using the CDF <span class="math inline">F_i(x_i)</span></li>
+<li>Transform <span class="math inline">U_i</span> into a standard normal vector <span class="math inline">Z_i</span> using the normal quantile function</li>
+</ol></li>
+<li>Calculate the correlation matrix of <span class="math inline">Z</span></li>
+</ol>
+<p>Use Spearman correlations. We are often dealing with distributions with large outliers, and Spearman is the more robust measure.</p>
+</section>
+<section id="spearman" class="slide level2">
+<h2>Spearman</h2>
+<p><span class="math display">
+r_s = \rho_{R(x),R(y)} = \frac{\operatorname{cov}\left( R(x),R(y) \right)}{\sigma_{R(x)} \sigma_{R(y)}}
+</span></p>
+<ul>
+<li><span class="math inline">R(x)</span> is the rank function</li>
+<li><span class="math inline">\overline{R(x)}</span> is the average of the rank function</li>
+</ul>
+<p>Pearson computed on rank vectors.</p>
+</section>
+<section id="skip-step-1b" class="slide level2">
+<h2>Skip Step 1b</h2>
+<p>Because Spearman uses ranks and the quantile function is monotonic, we can calculate Spearman correlations straight from the <span class="math inline">U</span> matrix.</p>
+<p>Ranks survive any monotone transform. <span class="math inline">F_i</span> is monotone and <span class="math inline">\Phi^{-1}</span> is monotone, so the ranks of <span class="math inline">X</span>, of <span class="math inline">U</span>, and of <span class="math inline">Z</span> are identical.</p>
+<p>A statistic computed from ranks cannot tell them apart. Week 02 made the same point with <span class="math inline">y = x^3</span>.</p>
+</section>
+<section id="r-must-be-psd" class="slide level2">
+<h2>R Must Be PSD</h2>
+<p>On complete data it will be.</p>
+<p>Spearman is Pearson computed on rank vectors, and a Pearson matrix built from complete data is PSD by the same argument as any covariance matrix.</p>
+<p>Missing data is where that breaks, for Spearman exactly as it did for Pearson in Week 03, and the repairs there apply here unchanged.</p>
+</section>
+<section id="simulating-from-the-copula" class="slide level2">
+<h2>Simulating from the Copula</h2>
+<ol type="1">
+<li>Simulate <span class="math inline">NSim</span> draws from the multivariate normal</li>
+<li>For each variable <span class="math inline">Z_i \in 1 \dots n</span>:
+<ol type="a">
+<li>Transform <span class="math inline">Z_i</span> into a uniform using the standard normal CDF, <span class="math inline">\Phi(z_i) = U_i</span></li>
+<li>Transform <span class="math inline">U_i</span> into the fitted distribution using its quantile function, <span class="math inline">F_i^{-1}(U_i) = X_i</span></li>
+</ol></li>
+</ol>
+<p>Step 2.b is where the fitted marginals come back. The correlated normals in step 1 are a scaffold, and nothing about the final values is normal unless <span class="math inline">F_i</span> was normal to begin with.</p>
+</section>
+<section id="tail-dependence" class="slide level2">
+<h2>Tail Dependence</h2>
+<p>One failure mode worth naming, because it is not obvious and it is not small.</p>
+<p>Tail dependence is the probability that one variable is extreme given that another is:</p>
+<p><span class="math display">
+\lambda_L = \lim_{u \to 0^+} P\left( U_1 \leq u\ |\ U_2 \leq u \right)
+</span></p>
+</section>
+<section id="zero-at-every-rho" class="slide level2">
+<h2>Zero at Every Rho</h2>
+<p>For the Gaussian copula, <span class="math inline">\lambda_L = 0</span> for every <span class="math inline">\rho &lt; 1</span>.</p>
+<p>Far enough into the tail, the variables become independent.</p>
+<p>Fit <span class="math inline">\rho = 0.9</span> and the model still says that a sufficiently extreme loss in one asset tells you nothing about the other.</p>
+</section>
+<section id="conditional-exceedance" class="slide level2">
+<h2>Conditional Exceedance</h2>
+
+<img data-src="../figures/joint-exceedance.png" style="width:88.0%" class="r-stretch quarto-figure-center"><p class="caption">The Gaussian curves fall to zero. The <span class="math inline">t</span> curves level off.</p></section>
+<section id="the-limit-in-progress" class="slide level2">
+<h2>The Limit in Progress</h2>
+<p>The left panel. At <span class="math inline">\rho = 0.7</span>, a 5% day in one asset means a 39% chance of a 5% day in the other, which sounds reasonable.</p>
+<p>Go to a 0.1% day and it is 16%. Go to a 0.001% day and it is 6%, still falling, on its way to 0.</p>
+<p>The right panel is the same picture under the <span class="math inline">t</span> copula. The curves flatten instead of falling, and the level each one flattens at is a number we will fit.</p>
+</section>
+<section id="whether-it-matters" class="slide level2">
+<h2>Whether It Matters</h2>
+<p>Depends entirely on what the simulation is for.</p>
+<p>It does not change a portfolio’s variance and it barely moves a 5% VaR.</p>
+<p>It changes the probability that many positions lose together on the same day, which is the event a risk manager is paid to worry about.</p>
+</section>
+<section id="li-and-2008" class="slide level2">
+<h2>Li and 2008</h2>
+<p>The Gaussian copula took a great deal of blame after 2008, mostly through Li (2000), which used it to price correlated defaults in CDO tranches.</p>
+<p>My opinion: the criticism is fair as far as the tail dependence goes and unfair as an explanation of the crisis.</p>
+<p>A model that assumes defaults become independent in the extreme is the wrong model for a senior tranche, and that is a real defect. It is not the reason anyone bought the tranche.</p>
+</section>
+<section id="other-families" class="slide level2">
+<h2>Other Families</h2>
+<p><strong>Archimedean</strong>, including Clayton, Gumbel, and Frank. Built from a generator function rather than from a multivariate distribution, and can be asymmetric between the upper and lower tails.</p>
+<p><strong>Vine</strong>, which builds a high dimensional dependence structure out of a tree of bivariate ones.</p>
+<p>We cover neither. Investigate them on your own if you are going to simulate financial data seriously.</p>
+<p>The <span class="math inline">t</span> copula we do cover, and building it requires the multivariate <span class="math inline">t</span> first.</p>
+</section></section>
+<section>
+<section id="the-multivariate-t-distribution" class="title-slide slide level1 center">
+<h1>The Multivariate <span class="math inline">t</span> Distribution</h1>
+
+</section>
+<section id="inherited-not-a-quirk" class="slide level2">
+<h2>Inherited, Not a Quirk</h2>
+<p>The Gaussian copula’s zero tail dependence comes from the multivariate normal that generates it.</p>
+<p>Change the generator to a distribution with fat joint tails and the copula inherits fat joint tails instead.</p>
+<p>The multivariate <span class="math inline">t</span> is the smallest such change from what we already have.</p>
+</section>
+<section id="the-density" class="slide level2">
+<h2>The Density</h2>
+<p><span class="math inline">X</span> of length <span class="math inline">n</span> is multivariate <span class="math inline">t</span> with <span class="math inline">\nu</span> degrees of freedom, location <span class="math inline">\mu</span>, and scale matrix <span class="math inline">\Sigma</span> when</p>
+<p><span class="math display">
+f(X) = c_{\nu,n}\left\lbrack 1 + \frac{1}{\nu}\left( X - \mu \right)'\Sigma^{-1}\left( X - \mu \right) \right\rbrack^{-\frac{\nu + n}{2}}
+</span></p>
+<p><span class="math display">
+c_{\nu,n} = \frac{\Gamma\left( \frac{\nu + n}{2} \right)}{\Gamma\left( \frac{\nu}{2} \right)\left( \nu\pi \right)^{n/2}\left| \Sigma \right|^{1/2}}
+</span></p>
+<p>The bracket is the part that does the work. <span class="math inline">c_{\nu,n}</span> only makes it integrate to 1.</p>
+</section>
+<section id="scale-not-covariance" class="slide level2">
+<h2>Scale, Not Covariance</h2>
+<p><span class="math inline">\Sigma</span> is a scale matrix. For <span class="math inline">\nu &gt; 2</span>,</p>
+<p><span class="math display">
+\operatorname{cov}(X) = \frac{\nu}{\nu - 2}\Sigma
+</span></p>
+<p>For <span class="math inline">\nu \leq 2</span> the covariance does not exist at all.</p>
+<p>Correlations are unaffected either way, since the scaling factor divides out of the numerator and the denominator.</p>
+</section>
+<section id="one-nu-for-every-margin" class="slide level2">
+<h2>One Nu for Every Margin</h2>
+<p>Every margin shares one <span class="math inline">\nu</span>.</p>
+<p>Fit a multivariate <span class="math inline">t</span> to a set of assets and the fit assigns all of them the same tail thickness, which is rarely what the data says.</p>
+<p>That restriction is exactly the one the copula construction removes.</p>
+</section>
+<section id="against-the-normal" class="slide level2">
+<h2>Against the Normal</h2>
+<p>The quadratic form <span class="math inline">\left( X - \mu \right)'\Sigma^{-1}\left( X - \mu \right)</span> appears in both.</p>
+<p>The normal puts it inside an exponential. The <span class="math inline">t</span> puts it inside a power.</p>
+<p>Take one variable with mean 0 and unit variance, so the <span class="math inline">t</span> carries a scale of <span class="math inline">s^2 = (\nu - 2)/\nu</span>, and let <span class="math inline">x</span> grow:</p>
+<p><span class="math display">
+\frac{f_t\left( x \right)}{f_N\left( x \right)} \propto \frac{\left( 1 + \frac{x^2}{\nu s^2} \right)^{-\frac{\nu + 1}{2}}}{e^{-x^2/2}} \sim x^{-\left( \nu + 1 \right)}e^{x^2/2} \rightarrow \infty
+</span></p>
+</section>
+<section id="no-power-beats-an-exponential" class="slide level2">
+<h2>No Power Beats an Exponential</h2>
+<p>The numerator falls like a power of <span class="math inline">x</span>. The denominator falls like <span class="math inline">e^{-x^{2}/2}</span>.</p>
+<p>Far enough out, the <span class="math inline">t</span> is arbitrarily more likely than the normal, and that holds for every finite <span class="math inline">\nu</span> no matter how large.</p>
+<p>Far enough out is closer than it sounds.</p>
+</section>
+<section id="a-normal-and-a-t_8" class="slide level2">
+<h2>A Normal and a <span class="math inline">t_8</span></h2>
+
+<img data-src="../figures/normal-vs-t.png" style="width:88.0%" class="r-stretch quarto-figure-center"><p class="caption">A standard normal and a <span class="math inline">t_8</span>, both scaled to unit variance</p></section>
+<section id="linear-and-log" class="slide level2">
+<h2>Linear and Log</h2>
+<p>The left panel is the pair on a linear scale, and they are hard to tell apart. The <span class="math inline">t</span> is a little taller at the center and a little thinner around one standard deviation. That is the entire visible difference.</p>
+<p>The right panel is the same two densities on a log scale, where the normal falls away as a parabola and the <span class="math inline">t</span> falls close to a straight line.</p>
+</section>
+<section id="the-tail-table" class="slide level2">
+<h2>The Tail Table</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th style="text-align: right;">Deviation</th>
+<th style="text-align: right;">Normal density</th>
+<th style="text-align: right;"><span class="math inline">t_8</span> density</th>
+<th style="text-align: right;">Ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">2\sigma</span></td>
+<td style="text-align: right;"><span class="math inline">5.40 \times 10^{-2}</span></td>
+<td style="text-align: right;"><span class="math inline">4.48 \times 10^{-2}</span></td>
+<td style="text-align: right;">0.8</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><span class="math inline">3\sigma</span></td>
+<td style="text-align: right;"><span class="math inline">4.43 \times 10^{-3}</span></td>
+<td style="text-align: right;"><span class="math inline">7.23 \times 10^{-3}</span></td>
+<td style="text-align: right;">1.6</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">4\sigma</span></td>
+<td style="text-align: right;"><span class="math inline">1.34 \times 10^{-4}</span></td>
+<td style="text-align: right;"><span class="math inline">1.29 \times 10^{-3}</span></td>
+<td style="text-align: right;">9.6</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;"><span class="math inline">5\sigma</span></td>
+<td style="text-align: right;"><span class="math inline">1.49 \times 10^{-6}</span></td>
+<td style="text-align: right;"><span class="math inline">2.76 \times 10^{-4}</span></td>
+<td style="text-align: right;">185</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><span class="math inline">6\sigma</span></td>
+<td style="text-align: right;"><span class="math inline">6.08 \times 10^{-9}</span></td>
+<td style="text-align: right;"><span class="math inline">7.03 \times 10^{-5}</span></td>
+<td style="text-align: right;">11,569</td>
+</tr>
+</tbody>
+</table>
+<p>Same variance, four orders of magnitude apart at six standard deviations.</p>
+</section>
+<section id="once-every-four-million-years" class="slide level2">
+<h2>Once Every Four Million Years</h2>
+<p>Under the normal, a six standard deviation loss or worse arrives about once every four million years of trading days.</p>
+<p>Under the <span class="math inline">t_8</span> it arrives about once every 65 years.</p>
+<p>That is one variable. The multivariate version does the same thing to the joint tail, which is the part we came for.</p>
+</section>
+<section id="the-mixture-representation" class="slide level2">
+<h2>The Mixture Representation</h2>
+<p>Week 01 built the Normal Inverse Gaussian as a normal variance mixture. The multivariate <span class="math inline">t</span> is another one:</p>
+<p><span class="math display">
+X = \mu + \sqrt{W}\ LZ,\ \ \ \ \ W = \frac{\nu}{Q},\ \ \ Q\sim\chi_{\nu}^{2},\ \ \ Z\sim N\left( 0,I \right)
+</span></p>
+<p><span class="math inline">L</span> is the Cholesky root of <span class="math inline">\Sigma</span> from Week 03.</p>
+<p>Draw a standard normal vector, draw one chi-square, scale the entire vector by the same <span class="math inline">\sqrt{W}</span>, and the result is multivariate <span class="math inline">t</span>.</p>
+</section>
+<section id="the-word-same" class="slide level2">
+<h2>The Word Same</h2>
+<p>One draw of <span class="math inline">W</span> scales every element of <span class="math inline">Z</span> at once, so on the draws where <span class="math inline">W</span> is large every asset is extreme together.</p>
+<p>No correlation matrix is doing that work. The common shock is the tail dependence.</p>
+<p>Simulating it costs one line more than the multivariate normal simulation in Week 03.</p>
+</section>
+<section id="check-it" class="slide level2">
+<h2>Check It</h2>
+<p>Most packages will draw from a multivariate <span class="math inline">t</span> directly.</p>
+<p>Build the mixture version anyway, simulate from both, and compare the sample covariance, the sample kurtosis, and a few quantiles.</p>
+<p>If they agree, use whichever you are more comfortable with. If they disagree, you have found either a bug or a parameterization difference, and the scale matrix is the first place to look.</p>
+</section>
+<section id="three-ways-to-fit" class="slide level2">
+<h2>Three Ways to Fit</h2>
+<p><strong>Full maximum likelihood.</strong> Optimize over <span class="math inline">\mu</span>, <span class="math inline">\Sigma</span>, and <span class="math inline">\nu</span> together. The surface is badly behaved because <span class="math inline">\Sigma</span> and <span class="math inline">\nu</span> trade off. Shrink <span class="math inline">\nu</span>, inflate <span class="math inline">\Sigma</span>, and the likelihood barely moves.</p>
+<p><strong>Expectation maximization.</strong> The standard method, and it works because of the mixture. Conditional on <span class="math inline">W</span> the model is a weighted multivariate normal with a closed form. Use a package.</p>
+<p><strong>Rank based with a profiled <span class="math inline">\nu</span>.</strong> What we will do. For a copula we need neither <span class="math inline">\mu</span> nor the scale of <span class="math inline">\Sigma</span>, only <span class="math inline">R</span> and <span class="math inline">\nu</span>.</p>
+</section>
+<section id="kendalls-tau" class="slide level2">
+<h2>Kendall’s Tau</h2>
+<p><span class="math inline">\tau</span> counts how often two variables agree about which of two observations is the larger one.</p>
+<p><strong>Concordant.</strong> The observation with the larger <span class="math inline">x</span> also has the larger <span class="math inline">y</span>:</p>
+<p><span class="math display">
+\operatorname{sign}\left( x_k - x_l \right) = \operatorname{sign}\left( y_k - y_l \right)
+</span></p>
+<p><strong>Discordant.</strong> The observation with the larger <span class="math inline">x</span> has the smaller <span class="math inline">y</span>.</p>
+</section>
+<section id="in-returns" class="slide level2">
+<h2>In Returns</h2>
+<p>Take any two days out of the sample.</p>
+<p>If the day that was better for the first stock was also the better day for the second, that pair of days is concordant.</p>
+<p>If the day that was better for the first stock was the worse day for the second, that pair is discordant.</p>
+</section>
+<section id="the-formula" class="slide level2">
+<h2>The Formula</h2>
+<p><span class="math display">
+\tau = \frac{\#\text{concordant} - \#\text{discordant}}{\binom{m}{2}}
+</span></p>
+<p><span class="math inline">\binom{m}{2}</span> is the number of pairs available to compare, which puts <span class="math inline">\tau</span> on the <span class="math inline">[-1,1]</span> scale we expect.</p>
+<p>Every pair concordant gives 1. Every pair discordant gives <span class="math inline">-1</span>. An even split gives 0.</p>
+<p>Only the ordering enters, never the values, so <span class="math inline">\tau</span> is a rank statistic like Spearman.</p>
+</section>
+<section id="why-tau-here" class="slide level2">
+<h2>Why Tau Here</h2>
+<p>Exactness. For any elliptical copula, which includes both the Gaussian and the <span class="math inline">t</span>,</p>
+<p><span class="math display">
+\rho = \sin\left( \frac{\pi\tau}{2} \right)
+</span></p>
+<p><span class="math inline">\nu</span> appears nowhere in that relation.</p>
+<p>Spearman has a matching identity under the Gaussian copula, <span class="math inline">\rho_S = \frac{6}{\pi}\arcsin(\rho/2)</span>, but no closed form under the <span class="math inline">t</span>.</p>
+<p>Estimating <span class="math inline">R</span> from <span class="math inline">\tau</span> means estimating it once and handing the same matrix to both models.</p>
+</section>
+<section id="a-worked-count" class="slide level2 smaller">
+<h2>A Worked Count</h2>
+<p>Eight observations, listed in increasing order of <span class="math inline">x</span>:</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th style="text-align: right;">Obs</th>
+<th style="text-align: right;"><span class="math inline">x</span></th>
+<th style="text-align: right;"><span class="math inline">y</span></th>
+<th style="text-align: right;">Rank of <span class="math inline">y</span></th>
+<th style="text-align: right;">Concordant</th>
+<th style="text-align: right;">Discordant</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><span class="math inline">-2.1</span></td>
+<td style="text-align: right;">0.2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><span class="math inline">-1.4</span></td>
+<td style="text-align: right;"><span class="math inline">-0.5</span></td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;"><span class="math inline">-0.9</span></td>
+<td style="text-align: right;"><span class="math inline">-1.8</span></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;"><span class="math inline">-0.3</span></td>
+<td style="text-align: right;"><span class="math inline">-1.1</span></td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0.4</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.8</td>
+<td style="text-align: right;">0.6</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">1.5</td>
+<td style="text-align: right;">2.2</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">2.6</td>
+<td style="text-align: right;">1.7</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"><strong>Total</strong></td>
+<td style="text-align: right;"><strong>21</strong></td>
+<td style="text-align: right;"><strong>7</strong></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="why-the-ordering-helps" class="slide level2">
+<h2>Why the Ordering Helps</h2>
+<p>Listing in increasing order of <span class="math inline">x</span> turns the counting into one comparison instead of two.</p>
+<p>For any pair of rows the lower row holds the larger <span class="math inline">x</span> by construction, so the pair is concordant when the lower row also holds the larger <span class="math inline">y</span>. The <span class="math inline">y</span> column is the only one that needs to be read.</p>
+<p>The last two columns count each row against the rows below it, which visits every pair exactly once.</p>
+</section>
+<section id="reading-three-rows" class="slide level2">
+<h2>Reading Three Rows</h2>
+<p>Row 1 has rank 4. The seven rows below hold 3, 1, 2, 6, 5, 8, 7. Four are above 4 and three are below, so 4 concordant and 3 discordant.</p>
+<p>Row 3 has rank 1, the smallest, so all five rows below hold a larger <span class="math inline">y</span>. Five concordant, none discordant.</p>
+<p>Row 7 has rank 8, the largest, so the single row below it is discordant.</p>
+</section>
+<section id="the-answer" class="slide level2">
+<h2>The Answer</h2>
+<p>The columns sum to 21 and 7, which is 28 pairs, matching <span class="math inline">\binom{8}{2}</span>.</p>
+<p><span class="math display">
+\tau = \frac{21 - 7}{28} = 0.5 \qquad \rho = \sin\left( \frac{\pi(0.5)}{2} \right) = \frac{\sqrt{2}}{2} = 0.7071
+</span></p>
+<p>The two variables agree about the ordering three times as often as they disagree, and under an elliptical copula that implies a correlation of 0.71.</p>
+</section>
+<section id="three-measures-no-winner" class="slide level2">
+<h2>Three Measures, No Winner</h2>
+<p>Pearson on the same eight pairs is 0.7116 and Spearman is 0.7381.</p>
+<p>The three measures do not have to agree and none of them is wrong.</p>
+<p>Only <span class="math inline">\tau</span> carries an inversion that is exact for the <span class="math inline">t</span> as well as for the Gaussian.</p>
+</section>
+<section id="is-the-tau-matrix-psd" class="slide level2">
+<h2>Is the Tau Matrix PSD</h2>
+<p>On complete data, yes, for the same reason the Spearman matrix is.</p>
+<p>Write the sample <span class="math inline">\tau</span> as an average over observation pairs <span class="math inline">(k,l)</span> of the outer product <span class="math inline">s^{(kl)}s^{(kl)'}</span>, where <span class="math inline">s_i^{(kl)} = \operatorname{sign}\left( x_{ik} - x_{il} \right)</span>.</p>
+<p>Every outer product is PSD and an average of PSD matrices is PSD.</p>
+</section>
+<section id="the-transform-breaks-it" class="slide level2">
+<h2>The Transform Breaks It</h2>
+<p><span class="math inline">\sin(\pi\tau/2)</span> is applied entry by entry, and an entrywise function of a PSD matrix carries no guarantee of coming back PSD.</p>
+<p>On the five assets ahead it does come back PSD, smallest eigenvalue 0.18.</p>
+<p>On all one hundred columns of <code>DailyPrices.csv</code> over the same year the <span class="math inline">\tau</span> matrix has a smallest eigenvalue of 0.050 and the transformed matrix has one of <span class="math inline">-0.0056</span>.</p>
+<p>Check the eigenvalues and repair with the Week 03 methods. Nothing like that could happen with Spearman, which was used directly as <span class="math inline">R</span>.</p>
+</section>
+<section id="profiling-nu" class="slide level2">
+<h2>Profiling Nu</h2>
+<p><span class="math inline">\nu</span> is what is left. Hold <span class="math inline">\mu</span> at the sample mean and <span class="math inline">R</span> at the rank estimate, and the scales come along for free.</p>
+<p>Run the scale relation backwards. At a given <span class="math inline">\nu</span>, variable <span class="math inline">i</span> with sample standard deviation <span class="math inline">\widehat{\sigma}_i</span> must have scale</p>
+<p><span class="math display">
+d_i\left( \nu \right) = \widehat{\sigma}_i\sqrt{\frac{\nu - 2}{\nu}}\ \ \ \ \ \ \ \ \Sigma\left( \nu \right) = D\left( \nu \right)RD\left( \nu \right)
+</span></p>
+<p>Every parameter of the distribution is now a function of <span class="math inline">\nu</span> alone.</p>
+</section>
+<section id="the-likelihood" class="slide level2">
+<h2>The Likelihood</h2>
+<p><span class="math display">
+\ell\left( \nu \right) = \sum_{k = 1}^{m}\ln f\left( x_k;\ \widehat{\mu},\ \Sigma\left( \nu \right),\ \nu \right)
+</span></p>
+<p><span class="math display">
+\widehat{\nu} = \underset{\nu}{\arg\max}\ \ell\left( \nu \right)\ \ \ \ \text{subject to}\ \ \ \ 2 &lt; \nu \leq \nu_{\max}
+</span></p>
+<p>The lower bound keeps the covariance finite.</p>
+<p>The upper bound is there because the objective flattens. Past <span class="math inline">\nu \approx 100</span> a <span class="math inline">t</span> and a normal are indistinguishable at any sample size we will have, so the likelihood stops discriminating and an unbounded search wanders.</p>
+</section>
+<section id="search-in-one-over-nu" class="slide level2">
+<h2>Search in One Over Nu</h2>
+<p>Search over <span class="math inline">\theta = 1/\nu</span> on <span class="math inline">\theta \in [0.01,\ 0.49]</span>.</p>
+<p>The difference between <span class="math inline">\nu = 4</span> and <span class="math inline">\nu = 5</span> matters a great deal. The difference between <span class="math inline">\nu = 40</span> and <span class="math inline">\nu = 50</span> matters almost not at all. Searching in <span class="math inline">\theta</span> puts the resolution where the first of those lives.</p>
+<p>Stop at 0.49 rather than 0.5 to keep <span class="math inline">\nu</span> off its lower boundary, where <span class="math inline">d_i(\nu)</span> collapses to zero and <span class="math inline">\Sigma</span> stops being invertible.</p>
+<p>A 200 point grid is cheap, and unlike a scalar optimizer it shows you the shape of the objective.</p>
+</section>
+<section id="what-this-is-not" class="slide level2">
+<h2>What This Is Not</h2>
+<p><span class="math inline">R</span> is held at the rank estimate and the scales are tied to the sample standard deviations.</p>
+<p>The likelihood is being maximized along a one dimensional slice rather than over the whole parameter space.</p>
+<p>It is cheap, it is stable, and it is close enough for what we do with it. EM does the joint version when you need the joint version.</p>
+</section>
+<section id="a-worked-fit" class="slide level2">
+<h2>A Worked Fit</h2>
+<p>Daily returns for SPY, AAPL, MSFT, JPM, and XOM from <code>DailyPrices.csv</code>, 249 observations. Code in <code>fit_multivariate_t.jl</code>.</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Asset</th>
+<th style="text-align: right;">Mean (%)</th>
+<th style="text-align: right;"><span class="math inline">\widehat{\sigma}</span> (%)</th>
+<th style="text-align: right;">Separate <span class="math inline">\widehat{\nu}</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">SPY</td>
+<td style="text-align: right;">0.100</td>
+<td style="text-align: right;">0.780</td>
+<td style="text-align: right;">7.74</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AAPL</td>
+<td style="text-align: right;">0.088</td>
+<td style="text-align: right;">1.416</td>
+<td style="text-align: right;">4.43</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">MSFT</td>
+<td style="text-align: right;">0.101</td>
+<td style="text-align: right;">1.254</td>
+<td style="text-align: right;">11.87</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">JPM</td>
+<td style="text-align: right;">0.192</td>
+<td style="text-align: right;">1.149</td>
+<td style="text-align: right;">4.50</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">XOM</td>
+<td style="text-align: right;">0.037</td>
+<td style="text-align: right;">1.277</td>
+<td style="text-align: right;">22.65</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="r-from-kendalls-tau" class="slide level2">
+<h2>R from Kendall’s Tau</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">SPY</th>
+<th style="text-align: right;">AAPL</th>
+<th style="text-align: right;">MSFT</th>
+<th style="text-align: right;">JPM</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">AAPL</td>
+<td style="text-align: right;">0.595</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MSFT</td>
+<td style="text-align: right;">0.721</td>
+<td style="text-align: right;">0.492</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">JPM</td>
+<td style="text-align: right;">0.452</td>
+<td style="text-align: right;">0.155</td>
+<td style="text-align: right;">0.140</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">XOM</td>
+<td style="text-align: right;">0.105</td>
+<td style="text-align: right;"><span class="math inline">-0.043</span></td>
+<td style="text-align: right;"><span class="math inline">-0.159</span></td>
+<td style="text-align: right;">0.307</td>
+</tr>
+</tbody>
+</table>
+<p>Smallest eigenvalue 0.181, so nothing needs repair.</p>
+<p>SPY carries the two largest correlations, which is what you would expect of an index against its own constituents. XOM sits nearly independent of the three technology and financial names.</p>
+</section>
+<section id="the-profile" class="slide level2">
+<h2>The Profile</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span class="math inline">\nu</span></th>
+<th style="text-align: right;"><span class="math inline">\ell\left( \nu \right)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4004.6</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">4020.8</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;"><strong>7.8</strong></td>
+<td style="text-align: right;"><strong>4022.6</strong></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">4021.6</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">4017.1</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">4012.9</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">4002.6</td>
+</tr>
+</tbody>
+</table>
+<p>The maximum sits at <span class="math inline">\widehat{\nu} = 7.8</span>, and the curve is flat enough around it that the grid resolution matters more than the optimizer does.</p>
+</section>
+<section id="what-the-shared-nu-costs" class="slide level2">
+<h2>What the Shared Nu Costs</h2>
+<p>Hold 7.8 against the last column of the moments table.</p>
+<p>Fitted one at a time these five series want degrees of freedom from 4.43 to 22.65, a range of five to one. The multivariate <span class="math inline">t</span> has to answer with a single number, and 7.8 sits closer to the fat tailed names than to XOM.</p>
+<p>Every margin is now misdescribed. AAPL and JPM are given thinner tails than they have and XOM is given fatter ones.</p>
+<p>That is the reason to want a construction that lets each margin keep its own.</p>
+</section></section>
+<section>
+<section id="the-t-copula" class="title-slide slide level1 center">
+<h1>The <span class="math inline">t</span> Copula</h1>
+
+</section>
+<section id="the-construction-1" class="slide level2">
+<h2>The Construction</h2>
+<p>Given <span class="math inline">R</span> and degrees of freedom <span class="math inline">\nu</span>:</p>
+<p><span class="math display">
+C_{R,\nu}(X) = t_{R,\nu}\left( t_{\nu}^{- 1}\left( F_1\left( x_1 \right) \right),\ \dots,\ t_{\nu}^{- 1}\left( F_n\left( x_n \right) \right) \right)
+</span></p>
+<p><span class="math inline">t_{\nu}^{-1}(x)</span> is the univariate <span class="math inline">t</span> quantile function and <span class="math inline">t_{R,\nu}(X)</span> the multivariate <span class="math inline">t</span> CDF.</p>
+<p>Held against the Gaussian copula, the only change is which quantile function goes in and which joint CDF comes out.</p>
+</section>
+<section id="two-different-nus" class="slide level2">
+<h2>Two Different Nus</h2>
+<p>The <span class="math inline">\nu</span> inside the copula has nothing to do with any <span class="math inline">\nu</span> fitted to a margin.</p>
+<p>A margin can be a normal, a <span class="math inline">t</span> with four degrees of freedom, or an empirical distribution, and the copula’s <span class="math inline">\nu</span> still governs the joint tail alone.</p>
+<p>Sklar’s theorem is what permits the separation.</p>
+<p>As <span class="math inline">\nu \rightarrow \infty</span> the <span class="math inline">t</span> copula converges to the Gaussian copula. The Gaussian is the nested special case.</p>
+</section>
+<section id="fitting" class="slide level2">
+<h2>Fitting</h2>
+<ol type="1">
+<li>For each variable, transform <span class="math inline">X_i</span> into <span class="math inline">U_i</span> using its own fitted CDF <span class="math inline">F_i(x_i)</span></li>
+<li>Calculate Kendall’s <span class="math inline">\tau</span> for every pair and set <span class="math inline">R = \sin(\pi\tau/2)</span>. Repair <span class="math inline">R</span> to PSD if the eigenvalues call for it</li>
+<li>Maximize the copula log likelihood over <span class="math inline">\nu</span> with <span class="math inline">R</span> held fixed</li>
+</ol>
+<p>Step 3 needs the copula density.</p>
+</section>
+<section id="the-copula-density" class="slide level2">
+<h2>The Copula Density</h2>
+<p>Differentiating Sklar’s theorem gives the joint density divided by the product of the marginal densities of the transformed variables:</p>
+<p><span class="math display">
+c_{R,\nu}\left( u_1,\ \dots,\ u_n \right) = \frac{f_{R,\nu}\left( t_{\nu}^{- 1}\left( u_1 \right),\ \dots,\ t_{\nu}^{- 1}\left( u_n \right) \right)}{\prod_{i = 1}^{n}f_{\nu}\left( t_{\nu}^{- 1}\left( u_i \right) \right)}
+</span></p>
+<p><span class="math inline">f_{R,\nu}</span> is the multivariate <span class="math inline">t</span> density with <span class="math inline">\mu = 0</span> and <span class="math inline">\Sigma = R</span>. <span class="math inline">f_{\nu}</span> is the univariate <span class="math inline">t</span> density carrying the same <span class="math inline">\nu</span>.</p>
+</section>
+<section id="reading-the-ratio" class="slide level2">
+<h2>Reading the Ratio</h2>
+<p>A comparison against independence.</p>
+<p>Independent densities multiply, so the denominator is the joint density the variables would have if nothing linked them. The numerator is the joint density they actually have.</p>
+<p>A copula density of 1 everywhere is independence. Above 1 marks the region where the variables turn up together more often than chance. Below 1 marks the region where they avoid each other.</p>
+</section>
+<section id="the-conditional-reading" class="slide level2">
+<h2>The Conditional Reading</h2>
+<p>In two dimensions, write <span class="math inline">f(x,y) = f(y \mid x)f(x)</span> and one marginal cancels:</p>
+<p><span class="math display">
+c\left( u,v \right) = \frac{f\left( x,y \right)}{f(x)f(y)} = \frac{f\left( y \mid x \right)}{f(y)}
+</span></p>
+<p>The copula density at a point is how much more likely <span class="math inline">y</span> becomes once you are told <span class="math inline">x</span>.</p>
+</section>
+<section id="the-log-likelihood" class="slide level2">
+<h2>The Log Likelihood</h2>
+<p><span class="math display">
+\ell\left( \nu \right) = \sum_{k = 1}^{m}\ln c_{R,\nu}\left( u_{k1},\ u_{k2},\ \dots,\ u_{kn} \right)
+</span></p>
+<p>Do not implement that as written.</p>
+<p>The copula density is a ratio holding a product of <span class="math inline">n</span> densities. Week 02 made the case against forming a product of densities: values sit below 1, and multiplying enough of them underflows to zero before the optimizer sees anything.</p>
+<p>The ratio adds a second way to fail, since a denominator that underflows to zero divides as well.</p>
+</section>
+<section id="the-log-splits-it" class="slide level2">
+<h2>The Log Splits It</h2>
+<p>A log of a ratio is a difference and a log of a product is a sum:</p>
+<p><span class="math display">
+\ln c_{R,\nu}\left( u_{k1},\ \dots \right) = \ln f_{R,\nu}\left( y_{k1},\ \dots \right) - \sum_{i = 1}^{n}\ln f_{\nu}\left( y_{ki} \right)
+</span></p>
+<p>with <span class="math inline">y_{ki} = t_{\nu}^{-1}\left( u_{ki} \right)</span>. Summing over observations:</p>
+<p><span class="math display">
+\ell\left( \nu \right) = \sum_{k = 1}^{m}\ln f_{R,\nu}\left( y_{k1},\ \dots,\ y_{kn} \right) - \sum_{k = 1}^{m}\sum_{i = 1}^{n}\ln f_{\nu}\left( y_{ki} \right)
+</span></p>
+<p>Two sums of logs, no product or ratio anywhere. Both terms are available as log density functions in any package, so neither density is evaluated on its own scale.</p>
+</section>
+<section id="the-search" class="slide level2">
+<h2>The Search</h2>
+<p><span class="math display">
+\widehat{\nu} = \underset{\nu}{\arg\max}\ \ell\left( \nu \right)\ \ \ \ \text{subject to}\ \ \ \ 2 &lt; \nu \leq \nu_{\max}
+</span></p>
+<p>Same bounds, same <span class="math inline">\theta = 1/\nu</span> substitution, same grid and refinement as the multivariate <span class="math inline">t</span>.</p>
+<p>The objective is the only thing that moved. One evaluation costs a <span class="math inline">t</span> quantile transform of the whole <span class="math inline">U</span> matrix and one quadratic form per observation.</p>
+</section>
+<section id="simulating" class="slide level2">
+<h2>Simulating</h2>
+<ol type="1">
+<li>Draw <span class="math inline">Y</span> from the multivariate <span class="math inline">t</span> with correlation <span class="math inline">R</span> and <span class="math inline">\widehat{\nu}</span>, using the mixture representation</li>
+<li>For each variable <span class="math inline">i \in 1\dots n</span>:
+<ol type="a">
+<li>Transform <span class="math inline">Y_i</span> into a uniform using the univariate <span class="math inline">t</span> CDF, <span class="math inline">t_{\widehat{\nu}}(y_i) = U_i</span></li>
+<li>Transform <span class="math inline">U_i</span> into the fitted distribution using its quantile function, <span class="math inline">F_i^{-1}(U_i) = X_i</span></li>
+</ol></li>
+</ol>
+</section>
+<section id="the-most-common-error" class="slide level2">
+<h2>The Most Common Error</h2>
+<p>Step 2.a uses the copula’s <span class="math inline">\widehat{\nu}</span>, not the margin’s.</p>
+<p>Confusing those two is the most common error in the entire construction, and the simulation still runs when you make it.</p>
+</section>
+<section id="tail-dependence-closed-form" class="slide level2">
+<h2>Tail Dependence, Closed Form</h2>
+<p><span class="math display">
+\lambda = 2\ t_{\nu + 1}\left( - \sqrt{\frac{\left( \nu + 1 \right)\left( 1 - \rho \right)}{1 + \rho}} \right)
+</span></p>
+<p><span class="math inline">t_{\nu + 1}</span> is the univariate <span class="math inline">t</span> CDF with one more degree of freedom than the copula.</p>
+<p>Positive for every finite <span class="math inline">\nu</span> and every <span class="math inline">\rho &gt; -1</span>.</p>
+<p>By symmetry the upper tail dependence is the same number, which is itself a modeling assumption and not a fact about markets.</p>
+</section>
+<section id="lambda-under-the-t-copula" class="slide level2">
+<h2>Lambda Under the <span class="math inline">t</span> Copula</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th style="text-align: right;"><span class="math inline">\rho</span></th>
+<th style="text-align: right;"><span class="math inline">\nu = 4</span></th>
+<th style="text-align: right;"><span class="math inline">\nu = 8</span></th>
+<th style="text-align: right;"><span class="math inline">\nu = 16</span></th>
+<th style="text-align: right;"><span class="math inline">\nu = 30</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">0.3</td>
+<td style="text-align: right;">0.162</td>
+<td style="text-align: right;">0.055</td>
+<td style="text-align: right;">0.008</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.5</td>
+<td style="text-align: right;">0.253</td>
+<td style="text-align: right;">0.117</td>
+<td style="text-align: right;">0.029</td>
+<td style="text-align: right;">0.003</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0.7</td>
+<td style="text-align: right;">0.391</td>
+<td style="text-align: right;">0.239</td>
+<td style="text-align: right;">0.101</td>
+<td style="text-align: right;">0.026</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0.9</td>
+<td style="text-align: right;">0.630</td>
+<td style="text-align: right;">0.509</td>
+<td style="text-align: right;">0.357</td>
+<td style="text-align: right;">0.211</td>
+</tr>
+</tbody>
+</table>
+<p>Every entry is 0 under the Gaussian copula.</p>
+</section>
+<section id="reading-the-table" class="slide level2">
+<h2>Reading the Table</h2>
+<p>Down a column, <span class="math inline">\lambda</span> tracks correlation, which is unsurprising.</p>
+<p>Across a row, <span class="math inline">\lambda</span> collapses as <span class="math inline">\nu</span> grows, which is the part that matters.</p>
+<p>Fitting <span class="math inline">\nu</span> is fitting the tail. There is no separate tail dependence parameter to set, and no way to fit the joint tail without committing to a value.</p>
+</section>
+<section id="choosing-between-the-copulas" class="slide level2">
+<h2>Choosing Between the Copulas</h2>
+<p>Week 02 answered a question of the same shape with goodness of fit statistics. Two candidate models, one data set, and a criterion that rewards fit and charges for parameters.</p>
+<p>AIC, AICc, and BIC are unchanged here. What changes is what we hand them.</p>
+<p>Fit the margins first and freeze them. Score only the copula log likelihood, on the same <span class="math inline">U</span> matrix, for both models.</p>
+</section>
+<section id="delta-bic" class="slide level2">
+<h2>Delta BIC</h2>
+<p>The Gaussian then has no free parameters left and the <span class="math inline">t</span> has one, so <span class="math inline">k_{\text{Gauss}} = 0</span> and <span class="math inline">k_t = 1</span>, and BIC collapses to a single line:</p>
+<p><span class="math display">
+\Delta BIC = 2\left( \ell_t - \ell_{\text{Gauss}} \right) - \ln m
+</span></p>
+<p>Take the <span class="math inline">t</span> when <span class="math inline">\Delta BIC</span> is positive.</p>
+</section>
+<section id="aicc-and-bic" class="slide level2">
+<h2>AICc and BIC</h2>
+<p>The two criteria charge different prices for that one extra parameter.</p>
+<p>AIC charges 2. BIC charges <span class="math inline">\ln m</span>, which is 5.52 at <span class="math inline">m = 249</span> and keeps growing with the sample. BIC is the harder test, and it gets harder the more data you have.</p>
+<p>AICc adds the small sample correction <span class="math inline">\frac{2k^2 + 2k}{m - k - 1}</span>, which is 0.016 here and vanishes in a large sample. Make AICc the default over plain AIC. It costs nothing when it is unnecessary.</p>
+<p>Report both. When they disagree, BIC is saying the extra parameter has not paid for itself at this sample size.</p>
+</section>
+<section id="same-r-for-both" class="slide level2">
+<h2>Same R for Both</h2>
+<p>The Gaussian copula was fit earlier with a Spearman matrix. Here both models are given the same <span class="math inline">R</span> built from Kendall’s <span class="math inline">\tau</span>.</p>
+<p>Handing the two models different correlation matrices would leave the likelihood gap part copula family and part correlation estimate, with no way to separate them.</p>
+<p>Compare on <span class="math inline">\tau</span>, and if the Gaussian wins, then decide between <span class="math inline">\tau</span> and Spearman for the production fit. The exact inversion there is <span class="math inline">\rho = 2\sin(\pi\rho_S/6)</span>, which returns 0.717 at <span class="math inline">\rho_S = 0.7</span>.</p>
+</section>
+<section id="not-a-likelihood-ratio-test" class="slide level2">
+<h2>Not a Likelihood Ratio Test</h2>
+<p>The Gaussian copula is the <span class="math inline">t</span> copula at <span class="math inline">\nu = \infty</span>.</p>
+<p>The null sits on the boundary of the parameter space, so the test statistic does not have its usual <span class="math inline">\chi^2</span> distribution there.</p>
+<p>AICc and BIC need no null distribution.</p>
+<p>One caveat. When the margins are empirical rather than fitted parametric distributions, what gets maximized is a pseudo likelihood and the information criteria lose their formal justification. Practitioners use them anyway. Know that you are doing it.</p>
+</section>
+<section id="a-worked-comparison" class="slide level2">
+<h2>A Worked Comparison</h2>
+<p>Same five assets, same 249 observations, same <span class="math inline">R</span>. Each margin is the Student’s <span class="math inline">t</span> already fitted. Code in <code>choosing_between_copulas.jl</code>.</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Statistic</th>
+<th style="text-align: right;">Gaussian</th>
+<th style="text-align: right;"><span class="math inline">t</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Log likelihood <span class="math inline">\ell</span></td>
+<td style="text-align: right;">196.41</td>
+<td style="text-align: right;">205.58</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Free parameters <span class="math inline">k</span></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Fitted <span class="math inline">\widehat{\nu}</span></td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">16.0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AICc</td>
+<td style="text-align: right;"><span class="math inline">-392.83</span></td>
+<td style="text-align: right;"><span class="math inline">-409.13</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BIC</td>
+<td style="text-align: right;"><span class="math inline">-392.83</span></td>
+<td style="text-align: right;"><span class="math inline">-405.63</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="the-verdict" class="slide level2">
+<h2>The Verdict</h2>
+<p><span class="math display">
+\Delta BIC = 2\left( 205.58 - 196.41 \right) - \ln 249 = 18.33 - 5.52 = 12.81
+</span></p>
+<p>A <span class="math inline">\Delta BIC</span> above 10 is read as strong evidence.</p>
+<p>The <span class="math inline">t</span> wins here, and it wins on data that is neither a crisis period nor a hand picked pair.</p>
+</section>
+<section id="sixteen-against-7.8" class="slide level2">
+<h2>Sixteen Against 7.8</h2>
+<p>Neither number is wrong, because the two are not estimating the same thing.</p>
+<p>The multivariate <span class="math inline">t</span> uses one <span class="math inline">\nu</span> for everything, so its estimate is pulled down by margins that are individually fat tailed, AAPL at 4.43 and JPM at 4.50.</p>
+<p>The copula has handed those margins off to their own fitted distributions, and what is left for its <span class="math inline">\nu</span> to describe is the joint tail alone, which is thinner than the individual tails are.</p>
+<p>That gap is the argument for the copula in one number. Forcing a single <span class="math inline">\nu</span> to carry both jobs makes it wrong for both.</p>
+</section>
+<section id="the-profile-is-flat" class="slide level2">
+<h2>The Profile Is Flat</h2>
+<p>The log likelihood is 205.47 at <span class="math inline">\nu = 14</span> and 205.35 at <span class="math inline">\nu = 20</span>, against 205.58 at the maximum.</p>
+<p><span class="math inline">\widehat{\nu}</span> is weakly identified and a different year of data would move it.</p>
+<p>The tail dependence moves with it. At the fitted SPY and MSFT correlation of 0.72, <span class="math inline">\widehat{\nu} = 16</span> gives <span class="math inline">\lambda = 0.12</span>, and <span class="math inline">\nu = 8</span> would have given 0.26.</p>
+</section>
+<section id="on-a-near-tie-take-the-t" class="slide level2">
+<h2>On a Near Tie, Take the <span class="math inline">t</span></h2>
+<p>My opinion.</p>
+<p>Almost all of the sample sits in the middle of the distribution, so that is what the criterion is scoring. The place the two models actually disagree is the tail where the data is thinnest.</p>
+<p>The two errors are not the same size. Choosing the <span class="math inline">t</span> when the Gaussian was right costs a slightly wider tail in the simulation.</p>
+<p>Choosing the Gaussian when the <span class="math inline">t</span> was right means the simulation never produces the day on which everything falls together.</p>
+</section></section>
+<section>
+<section id="putting-it-together" class="title-slide slide level1 center">
+<h1>Putting It Together</h1>
+
+</section>
+<section id="the-example-problem" class="slide level2">
+<h2>The Example Problem</h2>
+<ul>
+<li>Calculate VaR on a portfolio holding 1 share of each stock in <code>DailyPrices.csv</code></li>
+<li>Model prices as a linear function of SPY with <span class="math inline">t</span> distributed errors</li>
+<li>Model SPY as normally distributed</li>
+<li>Assume all stocks and SPY have 0 expected return</li>
+<li>Calculate VaR for each stock as well as the total portfolio</li>
+</ul>
+</section>
+<section id="where-each-piece-came-from" class="slide level2">
+<h2>Where Each Piece Came From</h2>
+<p>The regressions and their residual covariance are model based simulation.</p>
+<p>The mixed distributional assumptions, normal for SPY and <span class="math inline">t</span> for the errors, are what forces a copula.</p>
+<p>Simulating the copula and repricing the portfolio is Week 04’s Monte Carlo VaR with a non-normal draw.</p>
+<p>Report ES alongside VaR from the same simulated vector, since it costs one more line.</p>
+</section>
+<section id="the-answer-changes" class="slide level2">
+<h2>The Answer Changes</h2>
+<p><code>model_based_simulation_with_copulas.jl</code> runs both copulas end to end, and the answer is not the one from the worked comparison.</p>
+<p>Five raw return series: the <span class="math inline">t</span> wins by a <span class="math inline">\Delta BIC</span> of 12.8.</p>
+<p>The regression residuals, with SPY already taken out of every stock: the Gaussian wins by a <span class="math inline">\Delta BIC</span> of 3.8 at a fitted <span class="math inline">\widehat{\nu}</span> near 41.</p>
+</section>
+<section id="what-that-means" class="slide level2">
+<h2>What That Means</h2>
+<p>Most of the joint tail behavior in raw equity returns is the market factor.</p>
+<p>Take the market out and what is left looks close to Gaussian.</p>
+<p>The copula question is never about the data. It is about what is left after the model.</p>
+
+</section></section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="week05-slides_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="week05-slides_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="week05-slides_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="week05-slides_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="week05-slides_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="week05-slides_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="week05-slides_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="week05-slides_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="week05-slides_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'none',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1280,
+
+        height: 800,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>

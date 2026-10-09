@@ -1,0 +1,277 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Assignment 2 Responses</title><style>
+@page { size: Letter; margin: 0.65in 0.72in 0.70in; }
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+       color: #17212b; line-height: 1.38; font-size: 10.2pt; max-width: 8.5in; margin: auto; }
+h1 { color: #123b5d; font-size: 21pt; margin: 0 0 6px; }
+h2 { color: #123b5d; font-size: 15pt; border-bottom: 2px solid #8bb1c7; padding-bottom: 3px;
+     margin: 24px 0 9px; break-after: avoid; }
+h3 { color: #245c7a; font-size: 11.5pt; margin: 13px 0 4px; break-after: avoid; }
+p { margin: 5px 0 8px; }
+.title { min-height: 8.5in; display: flex; flex-direction: column; justify-content: center;
+         page-break-after: always; }
+.subtitle { color: #4f6573; font-size: 13pt; margin-bottom: 30px; }
+.summary { background: #eef5f8; border-left: 4px solid #2e718f; padding: 12px 15px; }
+.small { color: #536773; font-size: 8.8pt; }
+.equation { text-align: center; font-family: Georgia, serif; margin: 9px; }
+.figure { text-align: center; margin: 12px auto; break-inside: avoid; }
+.figure img { max-width: 96%; max-height: 4.4in; }
+.caption { font-size: 8.5pt; color: #536773; margin-top: 3px; }
+table { border-collapse: collapse; margin: 8px auto 12px; font-size: 8.4pt; width: 100%; break-inside: avoid; }
+th { background: #123b5d; color: white; font-weight: 600; }
+th, td { padding: 4px 6px; border: 1px solid #c9d5dc; text-align: right; }
+th:first-child, td:first-child { text-align: left; }
+tr:nth-child(even) td { background: #f4f7f9; }
+.pagebreak { page-break-before: always; }
+code { background: #eef1f3; padding: 1px 3px; }
+ul { margin-top: 4px; }
+</style></head>
+<body>
+<section class="title">
+  <h1>Assignment 2 — Covariance, VaR, and Copulas</h1>
+  <div class="subtitle">FinTech 545 — Quantitative Risk Management</div>
+  <div class="summary">
+    <b>Submission conventions.</b> Arithmetic returns are used throughout. Unless stated otherwise,
+    VaR and ES are at α=5% and are positive numbers for a loss. Sample variance uses n−1;
+    reported kurtosis is excess kurtosis. Monte Carlo results use 100,000 draws and seed
+    5452026.
+  </div>
+  <p class="small">All numbers and figures are reproduced by <code>python analysis.py</code>.
+  Detailed run instructions are in README.md.</p>
+</section>
+
+<h2>1. Correlations from Mismatched Histories</h2>
+
+<h3>Predict</h3>
+<p><b>(a)</b> The pairwise estimator can be non-PSD because each entry is estimated on a
+different set of dates. The entries need not be mutually consistent with any single joint data
+matrix. Complete-case correlation is a Gram matrix computed from the same 81 rows and is therefore
+PSD (positive definite here, apart from possible floating-point error).</p>
+<p><b>(b)</b> Since IDX is nearly a fixed linear combination of A–D, one direction in the five-series
+space has almost no variance. I therefore expected a smallest eigenvalue near zero. That makes this
+data unusually exposed: even a small inconsistency introduced by pairwise samples can push that
+small eigenvalue below zero.</p>
+<p><b>(c)</b> Before calculating correlations, I expected entries involving D to be least reliable:
+D has only 96 observations and only 83 jointly with C. C–D should be the noisiest pair, followed by
+A–D and B–D. Counts confirm the unequal histories:</p>
+<table><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th><th>IDX</th></tr></thead><tbody><tr><td>A</td><td>242</td><td>242</td><td>221</td><td>93</td><td>242</td></tr><tr><td>B</td><td>242</td><td>242</td><td>221</td><td>93</td><td>242</td></tr><tr><td>C</td><td>221</td><td>221</td><td>228</td><td>83</td><td>228</td></tr><tr><td>D</td><td>93</td><td>93</td><td>83</td><td>96</td><td>96</td></tr><tr><td>IDX</td><td>242</td><td>242</td><td>228</td><td>96</td><td>250</td></tr></tbody></table>
+<p>Only <b>81</b> days contain all five series.</p>
+
+<h3>Fit</h3>
+<p><b>(d)</b> The two estimated correlation matrices are:</p>
+<p class="small"><b>Complete-case correlation</b></p>
+<table><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th><th>IDX</th></tr></thead><tbody><tr><td>A</td><td>1.0000</td><td>0.3967</td><td>0.2466</td><td>0.4136</td><td>0.8714</td></tr><tr><td>B</td><td>0.3967</td><td>1.0000</td><td>0.3169</td><td>0.2361</td><td>0.6709</td></tr><tr><td>C</td><td>0.2466</td><td>0.3169</td><td>1.0000</td><td>0.1852</td><td>0.5648</td></tr><tr><td>D</td><td>0.4136</td><td>0.2361</td><td>0.1852</td><td>1.0000</td><td>0.5719</td></tr><tr><td>IDX</td><td>0.8714</td><td>0.6709</td><td>0.5648</td><td>0.5719</td><td>1.0000</td></tr></tbody></table>
+<p class="small"><b>Pairwise correlation</b></p>
+<table><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th><th>IDX</th></tr></thead><tbody><tr><td>A</td><td>1.0000</td><td>0.4686</td><td>0.4309</td><td>0.4384</td><td>0.8696</td></tr><tr><td>B</td><td>0.4686</td><td>1.0000</td><td>0.4630</td><td>0.2767</td><td>0.7329</td></tr><tr><td>C</td><td>0.4309</td><td>0.4630</td><td>1.0000</td><td>0.1846</td><td>0.7136</td></tr><tr><td>D</td><td>0.4384</td><td>0.2767</td><td>0.1846</td><td>1.0000</td><td>0.6057</td></tr><tr><td>IDX</td><td>0.8696</td><td>0.7329</td><td>0.7136</td><td>0.6057</td><td>1.0000</td></tr></tbody></table>
+<table><thead><tr><th>Ordered eigenvalue</th><th>Complete case</th><th>Pairwise</th></tr></thead><tbody><tr><td>1</td><td>0.001506</td><td>-0.011072</td></tr><tr><td>2</td><td>0.548345</td><td>0.471422</td></tr><tr><td>3</td><td>0.693320</td><td>0.528367</td></tr><tr><td>4</td><td>0.870441</td><td>0.857381</td></tr><tr><td>5</td><td>2.886388</td><td>3.153902</td></tr></tbody></table>
+<p>Cholesky on the complete-case matrix <b>succeeded</b>. Cholesky on the
+pairwise matrix <b>failed: Matrix is not positive definite</b>. The failure is substantive rather than rounding:
+the smallest pairwise eigenvalue is -0.011072.</p>
+<p><b>(e–f)</b> I combined the pairwise correlations with each series’ full-history standard
+deviation. For weights (−0.40, −0.30, −0.20, −0.10, 1.00), the results are:</p>
+<table><thead><tr><th>Matrix</th><th>Minimum eigenvalue</th><th>Frobenius repair distance</th><th>Tracking variance</th></tr></thead><tbody><tr><td>Unrepaired pairwise</td><td>-0.01107185</td><td>0</td><td>-0.000001799</td></tr><tr><td>Rebonato–Jaeckel</td><td>-7.51535850e-17</td><td>0.016182</td><td>0.000000681</td></tr><tr><td>Higham</td><td>-1.74062766e-12</td><td>0.015520</td><td>0.000000679</td></tr></tbody></table>
+<p>The unrepaired “variance” is -0.000001799, which is impossible.
+Both repairs return essentially PSD matrices; tiny negative displayed eigenvalues are convergence or
+floating-point noise. Higham converged in 32 iterations and, as intended,
+has the smaller Frobenius distance.</p>
+
+<h3>Reconcile</h3>
+<p><b>(g)</b> PSD means x′Σx ≥ 0 for every vector x. Portfolio variance is exactly x′Σx, so the
+negative number in (e) is a direct counterexample: the assembled covariance matrix is not PSD and
+cannot describe any valid joint distribution.</p>
+<p><b>(h)</b> The largest Higham moves were:</p>
+<table><thead><tr><th>Pair</th><th>Before</th><th>After</th><th>|Change|</th><th>Joint days</th></tr></thead><tbody><tr><td>A-IDX</td><td>0.8696</td><td>0.8625</td><td>0.007045</td><td>242</td></tr><tr><td>C-IDX</td><td>0.7136</td><td>0.7088</td><td>0.004765</td><td>228</td></tr><tr><td>B-IDX</td><td>0.7329</td><td>0.7287</td><td>0.004180</td><td>242</td></tr><tr><td>D-IDX</td><td>0.6057</td><td>0.6020</td><td>0.003727</td><td>96</td></tr><tr><td>A-C</td><td>0.4309</td><td>0.4332</td><td>0.002277</td><td>221</td></tr></tbody></table>
+<p>This does not match the simple “fewest observations” prediction: A–IDX moved most despite 242
+joint days. Higham was not given observation counts. It finds the globally nearest correlation
+matrix in Frobenius norm, so it changes entries according to the offending eigenstructure and the
+unit-diagonal constraint, not estimated precision. The negative eigenvector is the near-singular
+direction (IDX against the weighted basket), so the IDX correlations take most of the correction.</p>
+<p><b>(i)</b> The complete-versus-pairwise gap is 0.423935,
+whereas the Higham repair is only 0.015520—about
+27.3 times smaller.
+For these data, choosing complete-case versus pairwise estimation matters much more than choosing a
+repair method.</p>
+
+<h2>2. A Volatility Estimate After the Regime Changed</h2>
+<h3>Predict</h3>
+<div class="figure"><img src="figures/problem2_returns.png"><div class="caption">Figure 1.
+Demeaned returns; volatility jumps in the last 39 observations (dashed line).</div></div>
+<p><b>(a)</b> Before fitting, my ranking from smallest to largest was: equal-weight Normal,
+historical, fitted t, EW Normal λ=0.97, EW Normal λ=0.94. The first three use all 500 observations;
+I expected the t to charge for heavy tails. The last stretch of the sample is visibly more volatile, so
+both EW estimates should be larger, with λ=0.94 reacting most strongly.</p>
+<p><b>(b)</b> Eyeballing the plot, the calm period ends somewhere in the last 40 days or so. To pin it down I
+picked the single break point that maximises a two-variance Gaussian likelihood, which gives the last
+<b>39</b> returns (the 50-day cut I first tried diluted the new regime with calm days). The EW diagnostics
+are:</p>
+<table><thead><tr><th>λ</th><th>Effective n</th><th>Half-life (days)</th><th>Weight on last 39</th></tr></thead><tbody><tr><td>0.94</td><td>32.33</td><td>11.20</td><td>91.05%</td></tr><tr><td>0.97</td><td>65.67</td><td>22.76</td><td>69.51%</td></tr></tbody></table>
+<p><b>(c)</b> Full-sample moments are mean -2.220446e-19, variance
+0.00014190, skewness -0.156, and excess
+kurtosis 2.166. Excess kurtosis above 2 is not consistent with
+one stable normal regime; a variance mixture can create heavy unconditional tails even when returns
+within each regime are normal.</p>
+
+<h3>Fit</h3>
+<p><b>(d)</b> One-day VaR on the $1,000,000 position:</p>
+<table><thead><tr><th>Method</th><th>VaR</th></tr></thead><tbody><tr><td>Normal, equal-weight SD</td><td>$19,594</td></tr><tr><td>Normal, EW λ=0.97</td><td>$34,619</td></tr><tr><td>Normal, EW λ=0.94</td><td>$38,707</td></tr><tr><td>Fitted Student t</td><td>$18,872</td></tr><tr><td>Historical</td><td>$20,514</td></tr></tbody></table>
+<p>The t MLE is location 0.0001816, scale 0.0102900, and
+ν=8.27.</p>
+
+<h3>Reconcile</h3>
+<p><b>(e)</b> The realized order is fitted t &lt; equal-weight Normal &lt; historical &lt;
+EW λ=0.97 &lt; EW λ=0.94. My t prediction was wrong. At the 5% quantile, the fitted t’s smaller
+central scale more than offsets its heavier far tail; heavy tails need not increase a fixed 5% VaR
+when scale is estimated simultaneously. The EW ordering agreed with the prediction.</p>
+<p><b>(f)</b> The first 461 days have SD 1.02%; the final 39 have SD
+2.46%. Variance is about 5.9 times higher in the recent stretch, and pooling the two is
+what produces the excess kurtosis. The
+single fitted t is therefore largely describing a mixture of calm and volatile normal-like regimes,
+not necessarily one stationary heavy-tailed mechanism.</p>
+<p><b>(g)</b> The two EW VaRs differ by $4,088. Approximate one-standard-error
+VaR noise is $4,813 at λ=0.94 and
+$3,021 at λ=0.97; their combined scale
+is about $5,683.
+So the gap is about the size of the estimation noise, not clearly bigger. (Both estimates use the same
+returns, so their errors are correlated and the gap is somewhat more informative than this
+comparison suggests, but the conclusion is the same: the λ choice matters less than the fact that
+both are about twice the equal-weight number.) <i>Opinion:</i> I would use λ=0.94 for a
+trading limit because it reacts faster, and λ=0.97 for a capital number because it is more stable.</p>
+
+<h2>3. When Diversification Raises VaR</h2>
+<h3>Predict</h3>
+<div class="figure"><img src="figures/problem3_pnl.png"><div class="caption">Figure 2.
+The diversified position creates a large one-default loss state that crosses the 5% cutoff.</div></div>
+<p><b>(a)</b> A has mean 8.37%, skewness
+-4.82, and excess kurtosis 22.09;
+B has mean 8.50%, skewness -4.92, and
+excess kurtosis 23.09. The extreme negative skew and
+kurtosis make a symmetric Normal VaR structurally unsuitable.</p>
+<p><b>(b)</b> Losses beyond 20% occur 406 times for A, 393 for B,
+782 for at least one, and 17 for both. A single name
+defaults in fewer than 5% of scenarios, so its 5% VaR should still sit in the profitable state.
+At least one defaults in 7.82%, so the diversified 5% quantile should
+land in the one-default loss state and have larger VaR. I expected diversified ES to be smaller,
+because averaging the tail recognizes that splitting the exposure reduces loss severity.</p>
+
+<h3>Fit</h3>
+<table><thead><tr><th>Position</th><th>Hist VaR 5%</th><th>Hist ES 5%</th><th>Normal VaR 5%</th><th>Hist VaR 1%</th><th>Hist ES 1%</th></tr></thead><tbody><tr><td>$1m A</td><td>−$84,570</td><td>$443,628</td><td>$139,971</td><td>$649,701</td><td>$709,548</td></tr><tr><td>$1m B</td><td>−$86,063</td><td>$419,587</td><td>$132,277</td><td>$640,393</td><td>$700,805</td></tr><tr><td>$2m A</td><td>−$169,140</td><td>$887,257</td><td>$279,941</td><td>$1,299,403</td><td>$1,419,096</td></tr><tr><td>$1m A + $1m B</td><td>$414,604</td><td>$541,997</td><td>$143,466</td><td>$598,123</td><td>$716,408</td></tr></tbody></table>
+<p><b>(c–e)</b> Negative 5% VaR for the single-name positions is meaningful: at the 5th percentile
+they still earn a profit. At 1%, the quantile enters the default states and concentrated VaR jumps
+to $1,299,403, above diversified VaR
+$598,123.</p>
+
+<h3>Reconcile</h3>
+<p><b>(f)</b> VaR subadditivity fails dramatically:</p>
+<div class="equation">VaR(A)+VaR(B) = −$170,633
+&lt; VaR(A+B) = $414,604.</div>
+<p>ES remains subadditive:</p>
+<div class="equation">ES(A)+ES(B) = $863,216
+≥ ES(A+B) = $541,997.</div>
+<p>The mechanism is probability mass crossing one quantile: individual default probabilities are
+below 5%, while the probability that either defaults is above 5%. ES averages beyond the cutoff and
+therefore sees the severity reduction.</p>
+<p><b>(g)</b> Normal VaR favors diversification ($143,466 versus
+$279,941). Its decision happens to be sensible from a tail-severity/ES
+perspective, but for the wrong reason: it replaces discrete default states with an elliptical,
+symmetric distribution and mechanically rewards lower variance.</p>
+<p><b>(h)</b> At 1%, both individual and combined quantiles lie inside default outcomes, so the
+concentrated position finally looks riskier. VaR’s failure is threshold-dependent: it appears when
+diversification moves probability mass across α, and disappears when α is already deep enough to
+see each name’s default state.</p>
+
+<h2>4. Gaussian or t Copula</h2>
+<h3>Predict</h3>
+<p><b>(a)</b> Sample moments:</p>
+<table><thead><tr><th>Series</th><th>Mean</th><th>Variance</th><th>Skewness</th><th>Excess kurtosis</th></tr></thead><tbody><tr><td>X1</td><td>0.000257</td><td>0.00014147</td><td>-0.034</td><td>-0.117</td></tr><tr><td>X2</td><td>-0.000252</td><td>0.00026142</td><td>-0.615</td><td>7.125</td></tr><tr><td>X3</td><td>0.000890</td><td>0.00010038</td><td>0.074</td><td>2.874</td></tr></tbody></table>
+<p>From moments alone I would fit Normal to X1 and t to X2 and X3. X2’s skewness and kurtosis are
+strongly influenced by its single minimum (−14.29%): removing it changes skewness to
+0.056 and excess kurtosis to
+1.725. The remaining kurtosis is still positive, so t
+remains plausible.</p>
+<div class="figure"><img src="figures/problem4_rank_pairs.png"><div class="caption">Figure 3.
+Rank pairs show visibly more joint extremes than independence predicts.</div></div>
+<p><b>(b)</b> Independence predicts only 0.625 joint days
+in each tail for each pair. Observed and model-implied counts are:</p>
+<table><thead><tr><th>Pair</th><th>Observed lower</th><th>Observed upper</th><th>Gaussian lower</th><th>Gaussian upper</th><th>t lower</th><th>t upper</th></tr></thead><tbody><tr><td>X1-X2</td><td>6</td><td>8</td><td>6.25</td><td>6.00</td><td>9.58</td><td>9.17</td></tr><tr><td>X1-X3</td><td>7</td><td>12</td><td>4.79</td><td>4.69</td><td>8.22</td><td>7.77</td></tr><tr><td>X2-X3</td><td>6</td><td>9</td><td>4.61</td><td>4.13</td><td>8.04</td><td>7.42</td></tr></tbody></table>
+<p>The observed counts (6–12) are far above 0.625. The corners are denser than independence would
+allow, so I predicted the t copula would win.</p>
+
+<h3>Fit</h3>
+<p><b>(c)</b> Margin fits (Normal has k=2; t has k=3):</p>
+<table><thead><tr><th>Series</th><th>Chosen</th><th>Normal AICc</th><th>t AICc</th><th>t ν</th><th>t location</th><th>t scale</th></tr></thead><tbody><tr><td>X1</td><td>normal</td><td>-6,022.54</td><td>-6,020.49</td><td>2,890.18</td><td>0.000253</td><td>0.011860</td></tr><tr><td>X2</td><td>t</td><td>-5,408.49</td><td>-5,518.18</td><td>5.27</td><td>-0.000176</td><td>0.012544</td></tr><tr><td>X3</td><td>t</td><td>-6,365.69</td><td>-6,428.02</td><td>6.09</td><td>0.000746</td><td>0.008181</td></tr></tbody></table>
+<p><b>(d)</b> Kendall’s τ implies correlation matrix:</p>
+<table><thead><tr><th></th><th>X1</th><th>X2</th><th>X3</th></tr></thead><tbody><tr><td>X1</td><td>1.0000</td><td>0.5833</td><td>0.5029</td></tr><tr><td>X2</td><td>0.5833</td><td>1.0000</td><td>0.4644</td></tr><tr><td>X3</td><td>0.5029</td><td>0.4644</td><td>1.0000</td></tr></tbody></table>
+<table><thead><tr><th>Copula</th><th>Log likelihood</th><th>ν</th><th>AICc</th><th>BIC</th></tr></thead><tbody><tr><td>Gaussian</td><td>350.44</td><td>—</td><td>-700.88</td><td>-700.88</td></tr><tr><td>t</td><td>452.00</td><td>3.66</td><td>-901.99</td><td>-897.09</td></tr></tbody></table>
+<p>R is safely PSD (minimum eigenvalue 0.4128). Because R and the
+margins are frozen before comparison, the Gaussian copula has zero remaining free parameters and
+the t copula has one, ν.</p>
+<p><b>(e)</b> Portfolio risk for $1,000,000 in each asset:</p>
+<table><thead><tr><th>Method</th><th>VaR 5%</th><th>ES 5%</th><th>VaR 1%</th><th>ES 1%</th></tr></thead><tbody><tr><td>Gaussian copula</td><td>$49,934</td><td>$67,276</td><td>$77,566</td><td>$96,553</td></tr><tr><td>t copula</td><td>$49,344</td><td>$68,863</td><td>$80,308</td><td>$102,025</td></tr><tr><td>Historical</td><td>$47,541</td><td>$65,699</td><td>$67,264</td><td>$102,424</td></tr></tbody></table>
+<p><b>(f)</b> The joint-tail table above scales the 100,000 simulations to expected counts per 1,000
+days. Both copulas use the same underlying random draws, so the differences between them are not
+simulation noise. The t copula is closer for X1–X3 and for the upper tails, but it overshoots
+the lower-tail counts for X1–X2 (9.6 vs 6 observed) and X2–X3 (8.0 vs 6), and neither copula reaches
+the 12 observed X1–X3 upper days. With counts this small (6 to 12 days) these gaps are well within
+sampling variation.</p>
+
+<h3>Reconcile</h3>
+<p><b>(g)</b> The t copula wins decisively: ΔBIC in its favor is
+196.21, with ν=3.66. This agrees with the rank-plot
+prediction and observed joint tails.</p>
+<p><b>(h)</b> 1% ES moves the most: $96,553 under the Gaussian to $102,025 under the t, up $5,472
+(5.7%). 1% VaR rises $2,742 (3.5%), 5% ES rises $1,587 (2.4%), and 5% VaR actually falls $590 (1.2%).
+The 5% VaR barely moves because the 5% quantile of the sum sits in the body of the distribution,
+where both copulas share the same R and the same margins. The t copula moves mass out of the
+middle and into the joint tails, so it only shows up once you look far enough out, and 1% ES, which
+averages everything beyond the 1% point, picks up the most of it.</p>
+<p><b>(i)</b> The t-minus-Gaussian log-likelihood gain is
+101.559. The 793 days with every fitted uniform in
+[0.05,0.95] contribute 50.478, or
+49.7%. Thus the information criterion scores the entire copula
+density, not merely a tail-count diagnostic; nearly half its preference comes from the middle.</p>
+<p><b>(j)</b> The most correlated pair is X1-X2 with ρ=
+0.583. Its fitted t-copula tail-dependence coefficient is
+0.322. It is exactly zero under a Gaussian copula for |ρ|&lt;1.</p>
+
+<h2>5. Model-Based Simulation and Residual Correlation</h2>
+<h3>Predict</h3>
+<p><b>(a)</b> Let c=Cov(ε<sub>A</sub>,ε<sub>B</sub>)&gt;0 for stocks sharing an industry. The residual
+part of portfolio variance is σ²<sub>A</sub>+σ²<sub>B</sub>+2c for P1 and
+σ²<sub>A</sub>+σ²<sub>B</sub>−2c for P2. Setting c to zero therefore understates P1 VaR and overstates
+P2 VaR. I expected the effect to be proportionally larger for P2 because the long-short position
+cancels much of the common market and industry movement.</p>
+
+<h3>Fit</h3>
+<p><b>(b)</b> OLS with an intercept on the raw arithmetic returns. The α estimates are tiny and I
+set them (and the market mean) to zero afterwards in the simulation, following the zero expected
+return assumption:</p>
+<table><thead><tr><th>Stock</th><th>α</th><th>β</th><th>Residual SD</th></tr></thead><tbody><tr><td>A</td><td>0.0205%</td><td>1.0353</td><td>1.289%</td></tr><tr><td>B</td><td>0.0315%</td><td>0.9354</td><td>1.154%</td></tr></tbody></table>
+<p>The residual correlation is <b>0.6983</b>, strong evidence that
+independent residuals are inappropriate.</p>
+<p><b>(c–d)</b> One-day 5% VaR:</p>
+<table><thead><tr><th>Method</th><th>P1: long A + long B</th><th>P2: long A − long B</th></tr></thead><tbody><tr><td>Simulation: full residual covariance</td><td>$50,192</td><td>$15,759</td></tr><tr><td>Simulation: independent residuals</td><td>$44,192</td><td>$28,486</td></tr><tr><td>Delta Normal: sample stock covariance</td><td>$50,415</td><td>$15,834</td></tr></tbody></table>
+
+<h3>Reconcile</h3>
+<p><b>(e)</b> The shortcut moves both portfolios exactly as predicted. It lowers P1 from
+$50,192 to
+$44,192, but raises P2 from
+$15,759 to
+$28,486 (the same random draws drive both cases, so this gap is purely the residual correlation). P2 is more exposed in percentage
+terms because positive residual covariance is a hedge for a long-short portfolio; deleting it
+removes the hedge.</p>
+<p><b>(f)</b> Full-model simulation and Delta Normal agree within Monte Carlo error: P1 is
+$50,192 versus
+$50,415; P2 is
+$15,759 versus
+$15,834. OLS makes fitted values orthogonal to residuals, and jointly
+normal market and residual draws pass through a linear model to produce jointly normal stock
+returns with the sample covariance. The equivalence stops if the market or residuals are
+non-normal, dependence is nonlinear or time-varying, returns have nonzero conditional means, or
+portfolio payoffs are nonlinear.</p>
+
+<h2>Reproducibility Note</h2>
+<p>The analysis source is <code>analysis.py</code>. It reads only the five supplied CSV files,
+creates the three figures, and writes <code>results.json</code>. The README lists environment requirements and all
+commands.</p>
+</body></html>

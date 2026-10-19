@@ -1,3 +1,4 @@
+
 # FinTech 545 --- Quantitative Risk Management
 
 Lecture notes, code, and problem sets for FinTech 545. Nine weeks of notes are

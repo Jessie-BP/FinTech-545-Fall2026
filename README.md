@@ -1,4 +1,3 @@
-
 # FinTech 545 --- Quantitative Risk Management
 
 Lecture notes, code, and problem sets for FinTech 545. Nine weeks of notes are
@@ -42,7 +41,7 @@ as `Week 05 - Expected Shortfall and Copulas.pdf` rather than `week05.pdf`.
 
 Decks live in `Week0N/slides/`, one level below the notes. That keeps them out of
 the `Week*/week*.qmd` wildcard `make` uses, which would otherwise try to render a
-deck as an article PDF, and out of the way of `make clean`. Weeks 02 through 05
+deck as an article PDF, and out of the way of `make clean`. Weeks 02 through 08
 have decks so far. One on its own:
 
 ```
@@ -105,8 +104,8 @@ cd Week05 && julia --project=. -e 'using Pkg; Pkg.instantiate()'
 
 Two kinds, both committed.
 
-matplotlib PNGs, built by `figures/make_figures.py` in Weeks 02 through 07 and
-Week 09. Each script writes only its own week's figures and prints the numbers
+matplotlib PNGs, built by `figures/make_figures.py` in Weeks 02 through 09.
+Each script writes only its own week's figures and prints the numbers
 it plotted, so a figure or a table in the notes can be checked against what the
 script reports.
 

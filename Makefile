@@ -34,6 +34,7 @@ figures:
 	cd Week06/figures && python3 make_figures.py
 	cd Week07/figures && for f in amput divtree; do pdflatex -interaction=nonstopmode $$f.tex && pdftocairo -svg $$f.pdf $$f.svg; done
 	cd Week07/figures && python3 make_figures.py
+	cd Week08/figures && python3 make_figures.py
 	cd Week09/figures && for f in taxonomy sigma simflow; do pdflatex -interaction=nonstopmode $$f.tex && pdftocairo -svg $$f.pdf $$f.svg; done
 	cd Week09/figures && python3 make_figures.py
 

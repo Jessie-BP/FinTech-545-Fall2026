@@ -1,0 +1,860 @@
+---
+title: "Attribution and Risk Parity"
+subtitle: "FinTech 545 — Week 08"
+author: "Dominic Pazzula"
+format:
+  revealjs:
+    output-file: "week08-slides.html"
+    theme: default
+    slide-number: c/t
+    incremental: false
+    html-math-method: katex
+    center-title-slide: true
+    width: 1280
+    height: 800
+    fig-align: center
+---
+
+# Risk and Return Attribution
+
+## Where Week 07 Left Off
+
+Week 07 built portfolios.
+
+This week takes one apart and asks where its risk and its return actually came
+from.
+
+That is the question anyone who has to explain a quarter to a client is being
+asked.
+
+::: {.notes}
+Two exercises, same machinery run in opposite directions. Attribution takes a
+portfolio and allocates its risk and return to the pieces. Risk budgeting picks
+the allocation of risk first and solves for the portfolio. Both rest on one
+fact about homogeneous functions.
+:::
+
+## Ex-Post and Ex-Ante
+
+Attribution finds the contribution to return or risk from underlying factors.
+
+**Ex-post** looks at realized risk and return. How much did this stock add to
+the total return, and to the realized standard deviation?
+
+**Ex-ante** looks at assumed forward distributions and finds the contributions to
+expected risk and return.
+
+## The Decomposition
+
+Estimate the first derivative and use
+
+$$
+f(x) \approx \sum_{i}^{n} x_i \frac{\partial f}{\partial x_i}
+$$
+
+Each term is one input's contribution to the total.
+
+## Euler's Theorem
+
+If $f$ is homogeneous of degree 1, $f(\lambda x) = \lambda f(x)$, then
+
+$$
+f(x) = \sum_{i}^{n} x_i \frac{\partial f}{\partial x_i}
+$$
+
+exactly, with no error term.
+
+## Both Risk Measures Qualify
+
+Positive homogeneity is the property from Week 05 and Week 07.
+
+Portfolio standard deviation and expected shortfall are both homogeneous of
+degree 1 in the weights.
+
+The contributions add to the total exactly. Any residual in your code is an
+arithmetic error, not a modeling one.
+
+## Return Attribution
+
+The portfolio return is the sum of the weights times the arithmetic returns:
+
+$$
+R_t = \sum_{i}^{n} r_{i,t} w_{i,t}
+$$
+
+The derivative with respect to $r_i$ is just the weight. The contribution of
+factor $i$ at time $t$ is $w_i r_i$.
+
+## Why Arithmetic Returns
+
+Week 04: arithmetic returns are additive across assets inside a period.
+
+That is exactly what an attribution needs.
+
+# Linking Through Time
+
+## Returns Do Not Add Across Time
+
+The same arithmetic returns are not summable across periods.
+
+The total return is not the sum of the period returns, so the total attribution
+is not the sum of the period contributions.
+
+We need a way to link them. The most straightforward is Cariño's K.
+
+## Cariño's K
+
+The arithmetic and geometric total returns:
+
+$$
+R = \left[ \prod_{t}^{T} \left( 1 + R_t \right) \right] - 1,
+\qquad
+GR = \ln(R + 1)
+$$
+
+Their ratio:
+
+$$
+K = \frac{GR}{R}
+$$
+
+## A Scale for Every Period
+
+$$
+k_t = \frac{\ln\left( R_t + 1 \right)}{K R_t}
+$$
+
+By construction,
+
+$$
+R = \sum_{t}^{T} R_t k_t
+$$
+
+## Check It Once by Hand
+
+Substitute $k_t$:
+
+$$
+\sum_{t}^{T} R_t k_t = \frac{1}{K}\sum_{t}^{T} \ln\left( 1 + R_t \right)
+$$
+
+The sum of logs is the log of the product, and the log of the product is $GR$.
+
+$$
+\frac{GR}{K} = R
+$$
+
+## Attribution for Each Factor
+
+Inside a period the components are summable:
+
+$$
+R = \sum_{t}^{T} k_t \sum_{i}^{n} w_{i,t} r_{i,t}
+$$
+
+So the total attribution for factor $i$ is
+
+$$
+A_i = \sum_{t}^{T} k_t w_{i,t} r_{i,t}
+$$
+
+## The Weights Drift
+
+Unless the portfolio is rebalanced every period, the weights move with the
+market.
+
+Grow each weight by its return:
+
+$$
+w_{i,t}^{*} = w_{i,t}\left( 1 + r_{i,t} \right)
+$$
+
+## Normalize
+
+The portfolio return falls out of the grown weights:
+
+$$
+R_t = \left( \sum_{i}^{n} w_{i,t}^{*} \right) - 1
+$$
+
+Normalize to get the next period's starting weight:
+
+$$
+w_{i,t+1} = \frac{w_{i,t}^{*}}{R_t + 1}
+$$
+
+One pass gives both the portfolio returns and the weights at every period.
+
+## Do Not Skip It
+
+A position that doubles while the rest of the book is flat carries a very
+different weight at the end than at the start.
+
+Attributing its later returns at the original weight misstates every line of the
+report.
+
+And it does so without any error large enough to notice.
+
+# Risk Attribution
+
+## Volatility as the Risk
+
+$$
+\sigma_p = \sqrt{w'\Sigma w}
+$$
+
+The gradient:
+
+$$
+\frac{\partial \sigma_p}{\partial w} = \frac{\Sigma w}{\sqrt{w'\Sigma w}}
+$$
+
+For an individual $w_i$, take the $i^{th}$ row.
+
+## Component Volatility
+
+$$
+CSD = w\, \#\, \frac{\Sigma w}{\sqrt{w'\Sigma w}}
+$$
+
+$\#$ is element wise multiplication.
+
+By Euler, the components sum to $\sigma_p$.
+
+## What CSD Is Not
+
+It is not the risk of holding position $i$ on its own.
+
+The components do not add to the sum of the individual volatilities. They add to
+the portfolio volatility, the smaller number.
+
+The difference is diversification. The gradient allocates it across the
+positions instead of leaving it as an unexplained residual.
+
+## The Gradient Is a Covariance
+
+$$
+\frac{\partial \sigma_p}{\partial w_i} = \frac{1}{\sigma_p}\sum_{j}^{n}\left( w_j \Sigma_{i,j} \right)
+$$
+
+The sum is the definition of $\operatorname{cov}(x_i, p)$, so
+
+$$
+RA_i = \frac{w_i \operatorname{cov}(x_i,p)}{\sigma_p} = \frac{\operatorname{cov}(w_i x_i, p)}{\sigma_p}
+$$
+
+## It Is a Regression
+
+The OLS $\beta$ from Week 02:
+
+$$
+\beta = \frac{\operatorname{cov}(y, x)}{\sigma_x^2}
+$$
+
+Regress the weighted returns on the portfolio return:
+
+$$
+w_i x_i = c + \beta_{i,p}\, p + \epsilon
+\qquad \Rightarrow \qquad
+RA_i = \sigma_p \beta_{i,p}
+$$
+
+## Ex-Post Needs Only Returns
+
+Ex-ante risk attribution needs a covariance matrix.
+
+Ex-post needs only a series of realized returns and a regression.
+
+Week 02 machinery, applied to a question Week 02 never asked.
+
+## Beta Is a Share
+
+Divide both sides by $\sigma_p$:
+
+$$
+\frac{RA_i}{\sigma_p} = \beta_{i,p}
+$$
+
+The beta of position $i$ against the portfolio is its fraction of total
+portfolio risk.
+
+A beta of 0.30 is 30% of the volatility, whatever the volatility happens to be.
+
+## The Betas Sum to 1
+
+Regressing the portfolio on itself gives a coefficient of 1.
+
+The regression is linear in its dependent variable, so the individual betas add
+to that.
+
+Shares that sum to 1 are shares. It is also a free check on the arithmetic.
+
+# Problem 1
+
+## The Setup
+
+Construct the maximum Sharpe Ratio portfolio for AAPL, MSFT, BRK-B, CSCO, and
+JNJ.
+
+Attribute its realized return, then its realized risk, from 1-14 through the end
+of February.
+
+The expected returns come from a factor model, not from sample means.
+
+## Expected Returns From Factors
+
+1. Join the Fama French 3 factor file to momentum, divide by 100, join to
+   `DailyReturn.csv`
+2. Regress each stock on $[\text{Mkt-RF},\ \text{SMB},\ \text{HML},\ \text{Mom}]$
+   with an intercept. Keep the betas, discard the intercept
+3. Each factor's expected daily return is its mean over the last 10 years
+4. Geometric, annualized at 255 days:
+
+$$
+\mu_i = 255 \cdot \ln\left( 1 + \sum_{j} \beta_{i,j} E(f_j) \right)
+$$
+
+## Covariance From the Stocks
+
+$$
+\Sigma = 255 \cdot \operatorname{cov}\left( \ln(1 + Y) \right)
+$$
+
+Maximize the Sharpe Ratio subject to $\sum w_i = 1$ and $w_i \geq 0$, at a risk
+free rate of 25bp.
+
+A non-linear objective. It needs a solver, not a closed form.
+
+## Why Not a Factor Covariance
+
+We are assuming multivariate normality. A multivariate normal is completely
+described by $\mu$ and $\Sigma$.
+
+Splitting $\Sigma$ into a factor covariance and idiosyncratic variances would
+only add estimation error to a quantity we can already get in one step.
+
+## $T \gg n$
+
+Five stocks against several years of daily data. $\Sigma$ is full rank and
+comfortably estimated.
+
+Every Week 03 concern about singular covariance matrices is absent.
+
+Check that before reusing this setup. As the number of assets approaches the
+length of the series, the sample covariance degrades and then fails. That is
+Week 09.
+
+## The Weights
+
+| Stock | Weight |
+|:--|--:|
+| AAPL | 10.076% |
+| MSFT | 20.951% |
+| BRK-B | 43.839% |
+| CSCO | 8.118% |
+| JNJ | 17.015% |
+
+: Maximum Sharpe Ratio portfolio {tbl-colwidths="[50,50]"}
+
+## Return Attribution
+
+| | AAPL | MSFT | BRK-B | CSCO | JNJ | Portfolio |
+|:--|--:|--:|--:|--:|--:|--:|
+| Total Return | -4.47% | -3.48% | -0.83% | -9.11% | -1.32% | -2.51% |
+| Return Attribution | -0.46% | -0.71% | -0.37% | -0.75% | -0.22% | -2.51% |
+
+: {tbl-colwidths="[26,12,12,13,12,12,13]"}
+
+## Read the Rows Against Each Other
+
+CSCO had the worst total return, $-9.11\%$.
+
+MSFT lost less than half as much, $-3.48\%$, and contributed nearly as much to
+the portfolio loss. MSFT was held at more than twice the weight.
+
+The total return row says which stock did badly. The attribution row says which
+one hurt.
+
+## Add the Risk
+
+| | AAPL | MSFT | BRK-B | CSCO | JNJ | Portfolio |
+|:--|--:|--:|--:|--:|--:|--:|
+| Total Return | -4.47% | -3.48% | -0.83% | -9.11% | -1.32% | -2.51% |
+| Return Attribution | -0.46% | -0.71% | -0.37% | -0.75% | -0.22% | -2.51% |
+| Vol Attribution | 0.16% | 0.32% | 0.48% | 0.09% | 0.14% | 1.19% |
+
+: {tbl-colwidths="[26,12,12,13,12,12,13]"}
+
+## Euler Doing Its Work
+
+The volatility row adds to $1.19\%$, the portfolio volatility.
+
+Not to the sum of the five individual volatilities.
+
+BRK-B had the smallest loss of the five and carried the most risk. Return and risk attribution
+answer different questions.
+
+# Attribution to a Factor
+
+## From Positions to Factors
+
+So far, risk and return went to the positions.
+
+Describe each asset with $m$ factors instead:
+
+$$
+x_i = \alpha + \beta_i F + \epsilon,
+\qquad
+\beta_i F = \sum_{j}^{m} \beta_{i,j} F_j
+$$
+
+## The Residual
+
+Unless $\alpha = 0$ and $\sigma_e = 0$, the factors will not explain everything.
+
+Collect the error:
+
+$$
+e_i = \alpha_i + \epsilon_i
+$$
+
+$$
+p = \sum_{i}^{n} w_i \sum_{j}^{m} \beta_{i,j} F_j + \sum_{i}^{n} w_i e_i
+$$
+
+## Portfolio Alpha
+
+Attribute the error to each asset, or sum it and treat it as one more factor.
+
+In ex-post analysis that total is the portfolio alpha:
+
+$$
+\alpha_p = \sum_{i}^{n} w_i e_i
+$$
+
+## Two Names, One Residual
+
+**Return side.** Portfolio alpha. The part of the return the factors did not
+explain, which is what an active manager is paid for.
+
+**Risk side.** Idiosyncratic, specific, or residual risk. The part of the
+volatility that did not come from factor exposure.
+
+Plenty of reports use one term in the return table and the other in the risk
+table without saying so. Ask which is meant.
+
+## Collapsing to Factor Weights
+
+Define a factor weight:
+
+$$
+w_j = \sum_{i}^{n} w_i \beta_{i,j}
+$$
+
+$$
+p = \sum_{j}^{m} w_j F_j + \alpha_p
+$$
+
+## The Whole Trick
+
+A portfolio of $n$ assets has become a portfolio of $m$ factors plus a residual.
+
+If $m < n$, the problem got smaller.
+
+Nothing after this point knows or cares that the factors are not assets.
+
+## The Recipe
+
+1. Calculate factor weights through time
+2. Calculate portfolio return through time
+3. Calculate alpha through time
+4. Calculate the Cariño K scaling factors
+5. Perform the return attribution
+6. Regress on the portfolio for the risk attribution
+
+To push the residual back to the assets, expand $\alpha_p = \sum w_i e_i$. The
+math is the same.
+
+## Problem 2
+
+Same data as Problem 1.
+
+Attribute realized risk and return to Fama French 3 plus Momentum.
+
+Report the residual total as portfolio alpha.
+
+## Attribution to the Factors
+
+| | Mkt-RF | SMB | HML | Mom | Alpha | Portfolio |
+|:--|--:|--:|--:|--:|--:|--:|
+| Total Return | -5.8% | -0.11% | 2.03% | 0.82% | 1.78% | -2.51% |
+| Return Attribution | -4.45% | 0 | 0.29% | -0.08% | 1.77% | -2.51% |
+| Vol Attribution | 1.00% | -0.01% | -0.07% | 0.01% | 0.27% | 1.19% |
+
+: {tbl-colwidths="[26,13,12,12,12,12,13]"}
+
+Rows are rounded. The underlying attribution sums exactly. Check against the
+code, not the printed table.
+
+## The Market Dominates
+
+The market factor accounts for nearly the whole loss and nearly the whole risk.
+
+That is the usual result for a long only equity portfolio.
+
+## Negative Risk Is Not an Error
+
+SMB and HML carry negative volatility attribution.
+
+A factor whose realized returns ran counter to the portfolio reduces total risk.
+
+The gradient gives it a negative share.
+
+# Risk Budgeting and Risk Parity
+
+## Is Optimized Optimal?
+
+Richard Michaud, 1989, "The Markowitz Optimization Enigma: Is 'Optimized'
+Optimal?"
+
+Small changes to correlations, volatilities, and expected values change the
+portfolio dramatically.
+
+> "Mean Variance Optimization is Error Maximizing."
+
+## Or as Yogi Berra Said
+
+> "It's tough to make predictions, especially about the future."
+
+## The Mechanism Is Week 01
+
+The standard error of an estimated mean is $\sigma/\sqrt{n}$.
+
+For returns, $\sigma$ dwarfs $\mu$.
+
+The optimizer takes the noisy means at face value and loads up on whichever
+asset happened to look best.
+
+## What We Know Better
+
+Long term plans use estimated returns and covariance. In the long run, risk
+premia are fairly stable.
+
+Shorter term, we are less confident about expected return.
+
+We are more confident about volatilities, and to some extent correlations.
+
+## Risk Budgets
+
+Ex-ante risk contributions as a percentage of total risk show how much risk each
+position is given.
+
+Without a good view on expected return, control how much risk each position uses
+instead.
+
+That is risk budgeting.
+
+## The Max Sharpe Budget
+
+| AAPL | MSFT | BRK-B | CSCO | JNJ |
+|--:|--:|--:|--:|--:|
+| 11.8% | 29.5% | 39.7% | 9.15% | 9.8% |
+
+: Risk budget implied by the Problem 1 weights
+
+AAPL, CSCO, and JNJ have roughly the same budget.
+
+MSFT has 3x their risk. BRK-B has 4x.
+
+## Money Against Risk
+
+![Share of capital against share of ex-ante risk, maximum Sharpe Ratio portfolio](../figures/money-vs-risk.png){width=72%}
+
+## The Two Views Diverge
+
+BRK-B is 43.8% of the money and 39.7% of the risk. Close.
+
+JNJ is 17.0% of the money and 9.8% of the risk. MSFT is 21.0% of the money and
+29.5% of the risk.
+
+When they diverge, the risk view tells you what the portfolio will actually do.
+
+## Risk Parity
+
+Set the risk budgets equal.
+
+$$
+CSD = w\, \#\, \frac{\Sigma w}{\sqrt{w'\Sigma w}},
+\qquad
+SSE = \sum_{i}^{n} \left( CSD_i - \overline{CSD} \right)^2
+$$
+
+$$
+\min SSE
+\qquad
+s.t.\ \sum_{i}^{n} w_i = 1
+$$
+
+## Least Squares, Non-Linear
+
+It is a least squares problem.
+
+The square root and the inverse of portfolio volatility make it non-linear.
+
+It needs a non-linear optimizer.
+
+## Risk Parity Weights
+
+| Stock | Weight | Risk Budget | $\sigma$ |
+|:--|--:|--:|--:|
+| AAPL | 15.4% | 20% | 25.6% |
+| MSFT | 14.3% | 20% | 25.5% |
+| BRK-B | 26.5% | 20% | 15.2% |
+| CSCO | 15.1% | 20% | 23.4% |
+| JNJ | 28.7% | 20% | 14.9% |
+
+: Same covariance matrix as Problem 1 {tbl-colwidths="[28,24,24,24]"}
+
+## Low Risk, Large Weight
+
+Lower risk stocks get larger weights, roughly in proportion to $1/\sigma$.
+
+JNJ has the lowest volatility, 14.9%, and the largest weight, 28.7%.
+
+AAPL at 25.6% volatility takes about half that.
+
+## No Expected Return Anywhere
+
+No expected return appears in the optimization.
+
+No estimated mean can distort the answer.
+
+That is the entire appeal.
+
+## Inverse Volatility
+
+$$
+w_i = \frac{1}{\sigma_i} \cdot \frac{1}{\sum_{j}^{n} \frac{1}{\sigma_j}}
+$$
+
+An approximation to risk parity.
+
+Good starting values if the optimizer has trouble converging.
+
+## A Chain of Conditions
+
+All correlations equal: risk parity **is** inverse volatility.
+
+All correlations equal and all Sharpe Ratios equal: risk parity is also the
+maximum Sharpe Ratio portfolio.
+
+Long term Sharpe Ratios roughly equal: inverse volatility approximates the super
+efficient portfolio, with no means or correlations estimated.
+
+## Why It Is Defensible
+
+Not a claim that equal risk shares are inherently right.
+
+Under two assumptions we are more willing to make than a forecast of means,
+equal risk shares land on the portfolio the Week 07 optimization would have
+chosen.
+
+# Risk Parity with Unequal Risk Budgets
+
+## Expressing a View
+
+Portfolio managers often have an opinion about which assets will outperform.
+
+Give high conviction positions a larger risk budget and low conviction ones a
+smaller one.
+
+$$
+b = \left[ b_1, b_2,\ \dots,\ b_n \right]
+$$
+
+Twice the budget of everything else: $b_2 = 2 b_i \ \ \forall\ i \neq 2$.
+
+## Scale the Components
+
+$$
+CSD^{*} = \left[ \frac{CSD_1}{b_1}, \frac{CSD_2}{b_2},\ \dots,\ \frac{CSD_n}{b_n} \right]
+$$
+
+$$
+SSE = \sum_{i}^{n} \left( CSD_i^{*} - \overline{CSD^{*}} \right)^2,
+\qquad
+\min SSE \quad s.t.\ \sum_{i}^{n} w_i = 1
+$$
+
+## Strictly More General
+
+Set every $b_i$ equal and the division changes nothing.
+
+Plain risk parity is the special case where the manager has no view.
+
+## MSFT 2, JNJ 0.5
+
+| Stock | Weight | Risk Budget | $b$ | RP Weight |
+|:--|--:|--:|--:|--:|
+| AAPL | 13.8% | 18.2% | 1 | 15.4% |
+| MSFT | 23.2% | 36.4% | 2 | 14.3% |
+| BRK-B | 29.1% | 18.2% | 1 | 26.5% |
+| CSCO | 14.7% | 18.2% | 1 | 15.1% |
+| JNJ | 19.3% | 9.1% | 0.5 | 28.7% |
+
+: High conviction in MSFT, little in JNJ {tbl-colwidths="[22,20,20,14,24]"}
+
+## Counting Shares
+
+$b$ sums to 5.5.
+
+One share is $1/5.5 = 18.2\%$ of the risk. Two shares are $36.4\%$. Half a share
+is $9.1\%$.
+
+## Not a Rescaling
+
+BRK-B's risk budget went down, 18.2% against 20%.
+
+Its portfolio weight went up, 29.1% against 26.5%.
+
+Correlations matter.
+
+## The Correlations
+
+| | AAPL | MSFT | BRK-B | CSCO | JNJ |
+|:--|--:|--:|--:|--:|--:|
+| **AAPL**  | 1.00 | 0.61 | 0.00 | 0.20 | (0.08) |
+| **MSFT**  | 0.61 | 1.00 | (0.04) | 0.38 | (0.04) |
+| **BRK-B** | 0.00 | (0.04) | 1.00 | 0.22 | 0.40 |
+| **CSCO**  | 0.20 | 0.38 | 0.22 | 1.00 | 0.17 |
+| **JNJ**   | (0.08) | (0.04) | 0.40 | 0.17 | 1.00 |
+
+: Correlation matrix used in the risk parity examples
+
+## Trace It Through
+
+MSFT is correlated 0.61 with AAPL and 0.38 with CSCO. Raising MSFT raises the
+risk of two other positions along with its own.
+
+BRK-B and JNJ were offsetting MSFT. JNJ's weight was cut.
+
+BRK-B, at $-0.04$, is the only place to put money without adding to the
+concentration just created.
+
+# Non-Normal Risk Parity
+
+## Beyond Volatility
+
+Every risk parity portfolio so far assumed multivariate normality and used
+volatility.
+
+Returns are not normal. We need a more robust risk measure.
+
+## VaR Will Not Do
+
+VaR is not coherent.
+
+One implication: the VaR surface is non-convex. Optimizations may not converge,
+and can converge to a local optimum that is not the global one.
+
+ES is coherent, and convex.
+
+## Component Expected Shortfall
+
+$$
+ES(w) = \sum_{i}^{n} w_i \frac{\partial ES}{\partial w_i}
+$$
+
+Euler again. ES is positively homogeneous, property 3 of coherence in Week 05.
+
+The decomposition is exact for the same reason it was exact for volatility.
+
+## No Closed Form
+
+Without a known distribution, ES has no closed form gradient.
+
+Estimate it with a finite difference on the simulated returns $R$:
+
+$$
+\frac{\partial ES}{\partial w_i} \approx \frac{ES\left( \left[ w_1,\ \dots,\ w_i + e,\ \dots,\ w_n \right]\ |\ R \right) - ES(w\ |\ R)}{e}
+$$
+
+The forward difference from Week 07.
+
+## Hold $R$ Fixed
+
+Use the same simulated return matrix for both evaluations.
+
+The numerator is a difference of two nearly equal numbers.
+
+Redraw $R$ between them and the simulation noise dominates the derivative.
+
+## The Same Optimization
+
+$$
+CES = w\, \#\, \frac{\partial ES}{\partial w},
+\qquad
+SSE = \sum_{i}^{n} \left( CES_i - \overline{CES} \right)^2
+$$
+
+$$
+\min SSE
+\qquad
+s.t.\ \sum_{i}^{n} w_i = 1
+$$
+
+Only the component risk changed. Divide by $b$ for unequal budgets, as before.
+
+## Problem 3
+
+Same data as Problem 1, assuming a 0 mean return.
+
+Fit a $t$ distribution to each stock.
+
+Simulate the system with a Gaussian copula.
+
+Find the risk parity portfolio using ES as the risk measure.
+
+## ES Against Volatility
+
+| Stock | ES RP Portfolio | Vol RP Portfolio | Fitted DF |
+|:--|--:|--:|--:|
+| AAPL | 14.9% | 15.4% | 60,120 |
+| MSFT | 13.5% | 14.3% | 4.6 |
+| BRK-B | 26.4% | 26.5% | 21.7 |
+| CSCO | 14.2% | 15.1% | 4.5 |
+| JNJ | 31.0% | 28.7% | 9.4 |
+
+: {tbl-colwidths="[22,26,26,26]"}
+
+## Fat Tails Lose Weight
+
+AAPL's fitted degrees of freedom are enormous. It is effectively normal here, and
+so is BRK-B.
+
+MSFT and CSCO have the lowest degrees of freedom. Both are cut.
+
+Their fat tails contribute more to tail risk.
+
+## Three Risk Parity Portfolios
+
+![Risk parity under equal budgets, unequal budgets, and ES](../figures/risk-parity-weights.png){width=72%}
+
+## The Honest Headline
+
+The differences are small.
+
+Switching from volatility to ES moved the largest weight by 2.3 percentage
+points.
+
+Changing the budgets moved JNJ by 9.4.
+
+See the size of the effect before committing to the extra machinery.
+
+## Where This Goes
+
+Every attribution here took the factors as given.
+
+Problem 1 got away with a sample covariance because $T \gg n$.
+
+Week 09 builds the factors, and drops that assumption.

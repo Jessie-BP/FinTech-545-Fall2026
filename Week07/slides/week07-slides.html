@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="week07-slides_files/libs/clipboard/clipboard.min.js"></script>
+<script src="week07-slides_files/libs/quarto-html/tabby.min.js"></script>
+<script src="week07-slides_files/libs/quarto-html/popper.min.js"></script>
+<script src="week07-slides_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="week07-slides_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="week07-slides_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="week07-slides_files/libs/quarto-html/quarto-syntax-highlighting-17888a1159294d3eb470f19f6f52f5a5.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.10.20">
+
+  <meta name="author" content="Dominic Pazzula">
+  <title>American Options and Portfolio Construction</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="week07-slides_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="week07-slides_files/libs/revealjs/dist/reveal.css">
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="week07-slides_files/libs/revealjs/dist/theme/quarto-2740581606dc327e82f18f789b69d8a0.css">
+  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
+  <link href="week07-slides_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="week07-slides_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="week07-slides_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="week07-slides_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">American Options and Portfolio Construction</h1>
+  <p class="subtitle">FinTech 545 — Week 07</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Dominic Pazzula
+</div>
+</div>
+</div>
+
+</section>
+<section>
+<section id="american-options" class="title-slide slide level1 center">
+<h1>American Options</h1>
+
+</section>
+<section id="where-week-06-left-off" class="slide level2">
+<h2>Where Week 06 Left Off</h2>
+<p>Week 06 priced a European option three ways: the integral, the closed form, and the tree.</p>
+<p>The tree was the only one that could be walked backwards. That is what the American case needs.</p>
+<p>The second half of the week leaves options behind and builds portfolios.</p>
+<aside class="notes">
+<p>Two halves that look unrelated. The first is still a no arbitrage argument, now with a decision at every node. The second is the quadratic form from Week 02 traded against expected return. Both end in a picture with a boundary on it.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="the-right-to-exercise-early" class="slide level2">
+<h2>The Right to Exercise Early</h2>
+<p>An American option can be exercised at any time up to maturity.</p>
+<p>That is more choice than the European holder has, and all options have value:</p>
+<p><span class="math display">
+Value_{American} \geq Value_{European}
+</span></p>
+<p>The question is when the extra choice is worth anything.</p>
+</section>
+<section id="calls-on-non-dividend-payers" class="slide level2">
+<h2>Calls on Non-Dividend Payers</h2>
+<p>Exercising early gives up whatever option value remains and takes the payoff instead.</p>
+<p>For a call on a non-dividend paying stock, Week 06 showed the European value is always above the payoff:</p>
+<p><span class="math display">
+Call\ Value_{American,t} \geq Call\ Value_{European,t} &gt; \pi_t \ \ \ \forall\ t &gt; 0
+</span></p>
+<p>Selling the option always beats exercising it.</p>
+</section>
+<section id="worth-exactly-the-european" class="slide level2">
+<h2>Worth Exactly the European</h2>
+<p>The early exercise right on that call is never used, so it is worth nothing.</p>
+<p>An American call on a non-dividend paying stock is priced as the European call.</p>
+</section>
+<section id="unless-there-is-a-cash-flow" class="slide level2">
+<h2>Unless There Is a Cash Flow</h2>
+<p>If the underlying pays something, exercising may be worth it to own the stock and collect the payment.</p>
+<p>When the cash flow plus the payoff exceeds the value of the option, exercise early.</p>
+<p>That is the discrete dividend section.</p>
+</section>
+<section id="puts-are-different" class="slide level2">
+<h2>Puts Are Different</h2>
+<p>Week 06 ended with a deep in the money European put sitting below its payoff.</p>
+<p>The strike arrives only at maturity, so it is discounted. The gap is the interest on the strike.</p>
+</section>
+<section id="the-arbitrage-floor" class="slide level2">
+<h2>The Arbitrage Floor</h2>
+<p>An American put cannot trade there:</p>
+<p><span class="math display">
+Put\ Value_{American,t} \geq \pi_t \ \ \ \forall\ t
+</span></p>
+<p>If it did, buy the put and exercise it immediately. Pay less than <span class="math inline">X - S</span>, receive exactly <span class="math inline">X - S</span>, with no risk and no waiting.</p>
+<p>Anyone can do that, so the price never gets there.</p>
+</section>
+<section id="the-early-exercise-premium" class="slide level2">
+<h2>The Early Exercise Premium</h2>
+<p>The European put is free to sink below its payoff, and does.</p>
+<p>The American put is held up at the payoff by arbitrage.</p>
+<p>The difference between the two is what the early exercise right is worth.</p>
+<p>Early exercise of an American put can be optimal with no dividend at all.</p>
+</section>
+<section id="the-free-boundary" class="slide level2">
+<h2>The Free Boundary</h2>
+<p>The exercise decision is a critical stock price <span class="math inline">S^*</span>.</p>
+<p>Below <span class="math inline">S^*</span>, exercise. Above it, hold.</p>
+<p><span class="math inline">X=100</span>, <span class="math inline">r=8\%</span>, <span class="math inline">\sigma=30\%</span>, with <span class="math inline">0.25</span> years remaining: <span class="math inline">S^*</span> is a little under 82.</p>
+</section>
+<section id="why-there-is-no-closed-form" class="slide level2">
+<h2>Why There Is No Closed Form</h2>
+<p>The boundary is not known in advance. It comes out of the same backward induction that produces the price.</p>
+<p>It moves as the time remaining shrinks.</p>
+<p>Those two together are why the European put has a formula and the American put does not.</p>
+</section>
+<section id="valuing-with-a-tree" class="slide level2">
+<h2>Valuing with a Tree</h2>
+<p>Modify the European tree from Week 06:</p>
+<ol type="1">
+<li>Construct the tree as before</li>
+<li>Calculate the underlying price at every node, not just the final ones</li>
+<li>At the maturity nodes, value the option with the payoff function</li>
+<li>Work backwards, taking the better of exercising now and holding</li>
+</ol>
+<p>American and Bermuda options are both typically valued this way.</p>
+</section>
+<section id="backward-induction" class="slide level2">
+<h2>Backward Induction</h2>
+<p>At node <span class="math inline">i</span> of step <span class="math inline">j</span>:</p>
+<p><span class="math display">
+P_{i,j} = \max\left( \pi\left( S u^{i} d^{(j-i)} \right),\ e^{-r\Delta t}\left[ p P_{i+1,j+1} + (1-p) P_{i,j+1} \right] \right)
+</span></p>
+<p>The first term is exercising. The second is the discounted, risk neutral value of holding one more step.</p>
+</section>
+<section id="one-change-from-week-06" class="slide level2">
+<h2>One Change From Week 06</h2>
+<p>The European formula summed over terminal nodes only.</p>
+<p>The change is the <span class="math inline">\max</span>.</p>
+<p>A sum can be evaluated. A sequence of <span class="math inline">\max</span> operations has to be walked.</p>
+<p>That is the whole reason the European case has a closed form and this one does not.</p>
+</section>
+<section id="two-step-example" class="slide level2">
+<h2>Two Step Example</h2>
+<p>American put, <span class="math inline">N=2</span>, <span class="math inline">T=0.5</span>, <span class="math inline">S=100</span>, <span class="math inline">X=100</span>, <span class="math inline">r=b=0.08</span>, <span class="math inline">\sigma=0.3</span>.</p>
+<p><span class="math display">
+u = e^{0.3\sqrt{0.25}} = 1.1618, \qquad d = e^{-0.3\sqrt{0.25}} = 0.8607, \qquad p = 0.5297
+</span></p>
+</section>
+<section id="the-tree" class="slide level2">
+<h2>The Tree</h2>
+
+<img data-src="../figures/amput.svg" style="width:75.0%" class="r-stretch quarto-figure-center"><p class="caption">American put, 2 step tree. The down node at <span class="math inline">j=1</span> is exercised early.</p></section>
+<section id="walking-back" class="slide level2">
+<h2>Walking Back</h2>
+<p>At maturity the value is the payoff. Only the bottom node, <span class="math inline">S = 74.08</span>, is worth anything: <span class="math inline">25.9182</span>.</p>
+<p>At <span class="math inline">(j=1, i=0)</span>, <span class="math inline">S = 86.07</span>:</p>
+<p><span class="math display">
+\pi = 13.9292, \qquad e^{-0.08 \cdot 0.25}\left( 0.4703 \cdot 25.9182 \right) = 11.9491
+</span></p>
+<p>Exercise is worth more. The node takes <span class="math inline">13.9292</span>.</p>
+<p>At the root:</p>
+<p><span class="math display">
+e^{-0.08 \cdot 0.25}\left( 0.4703 \cdot 13.9292 \right) = 6.4218
+</span></p>
+</section>
+<section id="one-node-changed-the-answer" class="slide level2">
+<h2>One Node Changed the Answer</h2>
+<p>The early exercise happened at exactly one place in the tree.</p>
+<p>It changed the root value because the larger number propagated backwards.</p>
+<p>Everything else in the tree is the European calculation.</p>
+</section>
+<section id="a-word-of-caution" class="slide level2">
+<h2>A Word of Caution</h2>
+<p>The exercised node sits at <span class="math inline">S = 86.07</span>, above the true boundary.</p>
+<p>A converged model would not exercise there.</p>
+<p>The coarse tree gets the right qualitative answer for the wrong reason.</p>
+</section>
+<section id="use-enough-steps" class="slide level2">
+<h2>Use Enough Steps</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 40%">
+<col style="width: 30%">
+<col style="width: 30%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">2 step tree</th>
+<th style="text-align: right;">Converged</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">European put</td>
+<td style="text-align: right;">5.5088</td>
+<td style="text-align: right;">6.4670</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">American put</td>
+<td style="text-align: right;">6.4218</td>
+<td style="text-align: right;">6.8662</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Early exercise premium</td>
+<td style="text-align: right;">0.91</td>
+<td style="text-align: right;">0.40</td>
+</tr>
+</tbody>
+</table>
+<p>The 2 step tree more than doubles the premium.</p>
+</section></section>
+<section>
+<section id="american-options-with-discrete-dividends" class="title-slide slide level1 center">
+<h1>American Options with Discrete Dividends</h1>
+
+</section>
+<section id="continuous-dividends-work-for-indexes" class="slide level2">
+<h2>Continuous Dividends Work for Indexes</h2>
+<p>An index is a basket of stocks paying dividends at different times.</p>
+<p>They accrue to the index slowly, and the continuous dividend rate from Week 06, <span class="math inline">b = r - q</span>, describes that well.</p>
+</section>
+<section id="single-stocks-pay-dollars" class="slide level2">
+<h2>Single Stocks Pay Dollars</h2>
+<p>A single stock pays a set amount on a set date, not a rate.</p>
+<p>When the dividend is paid, the share price drops by the amount of the dividend.</p>
+<p>That is a discontinuity in the price path.</p>
+</section>
+<section id="why-the-tree-stops-recombining" class="slide level2">
+<h2>Why the Tree Stops Recombining</h2>
+<p>Week 06’s tree recombined because <span class="math inline">ud = 1</span>. Up then down returned exactly to the starting price.</p>
+<p>Subtracting a fixed dollar amount at one date breaks that.</p>
+<p>The same dollar is a different percentage at every node.</p>
+</section>
+<section id="an-example" class="slide level2">
+<h2>An Example</h2>
+<p>American call, <span class="math inline">N=2</span>, <span class="math inline">T=0.5</span>, <span class="math inline">S=100</span>, <span class="math inline">X=100</span>, <span class="math inline">r=b=0.08</span>, <span class="math inline">\sigma=0.3</span>.</p>
+<p>A dividend of $1.00 at <span class="math inline">t=0.25</span>.</p>
+<p><span class="math display">
+u = 1.1618, \qquad d = 0.8607, \qquad p = 0.5297
+</span></p>
+<p>Same parameters as the put, so the tree before the dividend is the same tree.</p>
+</section>
+<section id="the-non-recombining-tree" class="slide level2">
+<h2>The Non-Recombining Tree</h2>
+
+<img data-src="../figures/divtree.svg" style="width:62.0%" class="r-stretch quarto-figure-center"><p class="caption">A discrete dividend breaks recombination: each <span class="math inline">j=1</span> node spawns its own subtree.</p></section>
+<section id="each-dividend-spawns-trees" class="slide level2">
+<h2>Each Dividend Spawns Trees</h2>
+<p>A dividend paid at <span class="math inline">j = n</span> creates <span class="math inline">n+1</span> new trees, one from each node at that step.</p>
+<p>Each new tree starts from the node’s price less the dividend.</p>
+</section>
+<section id="exercise-at-the-dividend-date" class="slide level2">
+<h2>Exercise at the Dividend Date</h2>
+<p>A call exercised at <span class="math inline">j = n</span> gets the stock and the dividend with it.</p>
+<p>A put exercised at <span class="math inline">j = n</span> forgoes the price drop the dividend would have brought.</p>
+<p>Either way the exercise payoff is <span class="math inline">\pi\left( S_n + D_n \right)</span>, the payoff as if the dividend had not happened.</p>
+</section>
+<section id="what-it-costs" class="slide level2">
+<h2>What It Costs</h2>
+<p>After the dividend date the node count grows like <span class="math inline">2^N</span> again.</p>
+<p>A tree with several dividends and a realistic number of steps becomes expensive quickly.</p>
+</section>
+<section id="when-early-exercise-is-optimal" class="slide level2">
+<h2>When Early Exercise Is Optimal</h2>
+<p>In practice, only calls are exercised early to receive the dividend.</p>
+<p>Hull, Chapter 15, shows exercise is optimal when</p>
+<p><span class="math display">
+D_n &gt; X\left( 1 - e^{-r\left( T - t_n \right)} \right)
+</span></p>
+<p><span class="math inline">t_n</span> is the time dividend <span class="math inline">D_n</span> is paid.</p>
+</section>
+<section id="interest-on-the-strike" class="slide level2">
+<h2>Interest on the Strike</h2>
+<p>The right hand side is the interest earned on the strike between the dividend date and maturity.</p>
+<p>Exercising early hands over the strike sooner.</p>
+<p>The dividend has to be worth more than the interest given up.</p>
+</section>
+<section id="apply-it-to-the-example" class="slide level2">
+<h2>Apply It to the Example</h2>
+<p><span class="math inline">D_n = 1.00</span>, <span class="math inline">X = 100</span>, <span class="math inline">r = 8\%</span>, <span class="math inline">T - t_n = 0.25</span>:</p>
+<p><span class="math display">
+X\left( 1 - e^{-0.08 \cdot 0.25} \right) = 1.98
+</span></p>
+<p><span class="math inline">1.00 &lt; 1.98</span>. The dividend is too small to justify early exercise.</p>
+<p>The example shows what a dividend does to the shape of the tree. Raise it above $1.98 and the call is exercised at <span class="math inline">t_n</span>.</p>
+</section>
+<section id="implementing-it" class="slide level2">
+<h2>Implementing It</h2>
+<p>An exercise in recursion, and it handles any number of dividends.</p>
+<ol type="1">
+<li>No dividends during the life of the option: use the recombining tree</li>
+<li>Build the nodes up to the first dividend. At each node:
+<ol type="a">
+<li><strong>No exercise.</strong> Call the tree recursively with the price less the dividend and the remaining dividends</li>
+<li><strong>Exercise.</strong> The payoff on the price before the dividend</li>
+</ol></li>
+<li>Work backwards to the starting node</li>
+</ol>
+</section>
+<section id="the-most-generic-method" class="slide level2">
+<h2>The Most Generic Method</h2>
+<p>There are many ways to handle discrete cash flows.</p>
+<p>A tree that is allowed to stop recombining is the most generic. The same structure applies to any problem with a fixed cash flow on a fixed date.</p>
+</section></section>
+<section>
+<section id="the-greeks" class="title-slide slide level1 center">
+<h1>The Greeks</h1>
+
+</section>
+<section id="sensitivities" class="slide level2">
+<h2>Sensitivities</h2>
+<p>The Greeks are the partial derivatives of the pricing function with respect to its inputs.</p>
+<p>They approximate the change in option value for a change in an input.</p>
+<p>The underlying price and the implied volatility move, and that movement is the risk in holding the option. Knowing the approximate change is what makes hedging possible.</p>
+</section>
+<section id="delta-is-week-04s-delta" class="slide level2">
+<h2>Delta Is Week 04’s <span class="math inline">\delta</span></h2>
+<p>Delta Normal VaR needed the first derivative of every position with respect to every underlying price.</p>
+<p>For an option, that derivative is delta.</p>
+<p>The gradient from Week 04 was waiting for this.</p>
+</section>
+<section id="the-main-greeks" class="slide level2 smaller">
+<h2>The Main Greeks</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 32%">
+<col style="width: 40%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Greek</th>
+<th style="text-align: left;">Definition</th>
+<th style="text-align: left;">Call</th>
+<th style="text-align: left;">Put</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Delta, <span class="math inline">\Delta</span></td>
+<td style="text-align: left;"><span class="math inline">\frac{\partial P}{\partial S}</span></td>
+<td style="text-align: left;"><span class="math inline">e^{(b-r)T}\Phi(d_1)</span></td>
+<td style="text-align: left;"><span class="math inline">e^{(b-r)T}\left( \Phi(d_1) - 1 \right)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Gamma, <span class="math inline">\Gamma</span></td>
+<td style="text-align: left;"><span class="math inline">\frac{\partial^2 P}{\partial S^2}</span></td>
+<td style="text-align: left;"><span class="math inline">\frac{f(d_1) e^{(b-r)T}}{S\sigma\sqrt{T}}</span></td>
+<td style="text-align: left;">same as call</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Vega</td>
+<td style="text-align: left;"><span class="math inline">\frac{\partial P}{\partial \sigma}</span></td>
+<td style="text-align: left;"><span class="math inline">S e^{(b-r)T} f(d_1)\sqrt{T}</span></td>
+<td style="text-align: left;">same as call</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rho, <span class="math inline">\rho</span></td>
+<td style="text-align: left;"><span class="math inline">\frac{\partial P}{\partial r}</span></td>
+<td style="text-align: left;"><span class="math inline">T X e^{-rT}\Phi(d_2)</span></td>
+<td style="text-align: left;"><span class="math inline">-T X e^{-rT}\Phi(-d_2)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Carry Rho</td>
+<td style="text-align: left;"><span class="math inline">\frac{\partial P}{\partial b}</span></td>
+<td style="text-align: left;"><span class="math inline">T S e^{(b-r)T}\Phi(d_1)</span></td>
+<td style="text-align: left;"><span class="math inline">-T S e^{(b-r)T}\Phi(-d_1)</span></td>
+</tr>
+</tbody>
+</table>
+<p>From the generalized BSM. <span class="math inline">f</span> is the normal PDF and <span class="math inline">\Phi</span> the normal CDF. Gamma is also called convexity. Rho is shown for Black Scholes, where <span class="math inline">r = b</span>.</p>
+</section>
+<section id="theta" class="slide level2">
+<h2>Theta</h2>
+<p>The derivative with respect to time to maturity, <span class="math inline">-\frac{\partial P}{\partial T}</span>.</p>
+<p>Negative, but often quoted as a positive number. Also called theta decay.</p>
+<p><span class="math display">
+\begin{aligned}
+\Theta_{call} &amp;= -\frac{S e^{(b-r)T} f(d_1) \sigma}{2\sqrt{T}} - (b-r) S e^{(b-r)T}\Phi(d_1) \\
+&amp;\qquad - r X e^{-rT}\Phi(d_2) \\[10pt]
+\Theta_{put} &amp;= -\frac{S e^{(b-r)T} f(d_1) \sigma}{2\sqrt{T}} + (b-r) S e^{(b-r)T}\Phi(-d_1) \\
+&amp;\qquad + r X e^{-rT}\Phi(-d_2)
+\end{aligned}
+</span></p>
+</section>
+<section id="gamma-and-vega-match" class="slide level2">
+<h2>Gamma and Vega Match</h2>
+<p>Gamma and vega are identical for a call and a put at the same strike.</p>
+<p>Put call parity forces it. The difference between the two is</p>
+<p><span class="math display">
+C - P = S - Xe^{-rT}
+</span></p>
+<p>Linear in <span class="math inline">S</span>, so no second derivative. No <span class="math inline">\sigma</span> in it at all, so no vega.</p>
+</section>
+<section id="one-evaluation" class="slide level2">
+<h2>One Evaluation</h2>
+<p>Every formula carries <span class="math inline">f(d_1)</span> or <span class="math inline">\Phi(d_1)</span>.</p>
+<p>A single evaluation of the pricing function produces all of them.</p>
+</section>
+<section id="the-kink-gets-a-name" class="slide level2">
+<h2>The Kink Gets a Name</h2>
+<p>Week 06 said the kink at the strike is where the payoff stops being linear.</p>
+<p>Gamma is that curvature, measured.</p>
+<p>Delta Normal VaR keeps the first derivative and throws gamma away. On a book of options, that is the term that matters.</p>
+</section>
+<section id="hedging-example" class="slide level2">
+<h2>Hedging Example</h2>
+<p>A market maker sells 100 calls that expire in 15 trading days, for $2.50 each.</p>
+<p>Stock at $100.50, strike $100, risk free rate 25bp, no dividend.</p>
+<p>Priced with the GBSM.</p>
+<ol type="1">
+<li>What is the 1 day VaR and ES of the position, using a simulated normal?</li>
+<li>Hedge by buying stock equal to the negative of the position’s delta. What are the new VaR and ES?</li>
+</ol>
+</section>
+<section id="what-the-hedge-leaves-behind" class="slide level2">
+<h2>What the Hedge Leaves Behind</h2>
+<p>The hedge removes the first order exposure and leaves the second order exposure.</p>
+<p>A short call is short gamma. The delta hedged book loses on a large move in either direction.</p>
+<p>Its VaR does not go to zero, however precisely the delta is matched.</p>
+<p>Compare the two answers. Do not just report the second one.</p>
+</section>
+<section id="numerical-derivatives" class="slide level2">
+<h2>Numerical Derivatives</h2>
+<p>Not every valuation method has closed form derivatives.</p>
+<p>An American option priced on a tree is the obvious case. There is no formula to differentiate.</p>
+<p>The simplest numerical method is a finite difference. Automatic differentiation may be available, and faster or more accurate.</p>
+</section>
+<section id="central-difference" class="slide level2">
+<h2>Central Difference</h2>
+<p><span class="math display">
+f'(x) \approx \frac{f(x+\Delta) - f(x-\Delta)}{2\Delta}
+</span></p>
+<p>Close enough for a small enough <span class="math inline">\Delta</span>, assuming a smooth surface.</p>
+<p>Two evaluations of the function. For some valuation methods, that is a real computing cost.</p>
+</section>
+<section id="forward-difference" class="slide level2">
+<h2>Forward Difference</h2>
+<p><span class="math display">
+f'(x) \approx \frac{f(x+\Delta) - f(x)}{\Delta}
+</span></p>
+<p><span class="math inline">f(x)</span> is the current value, already computed. One more evaluation.</p>
+<p>Cheaper, and less accurate. A backward difference is the same trade.</p>
+</section>
+<section id="three-secants" class="slide level2">
+<h2>Three Secants</h2>
+
+<img data-src="../figures/finite-difference.png" style="width:80.0%" class="r-stretch quarto-figure-center"><p class="caption">Forward, backward, and central difference approximations</p></section>
+<section id="why-the-central-difference-wins" class="slide level2">
+<h2>Why the Central Difference Wins</h2>
+<p>The forward and backward secants both sit visibly off the tangent.</p>
+<p>They miss in opposite directions.</p>
+<p>The central difference averages the two, and the leading error term cancels.</p>
+<p>Worth the extra evaluation.</p>
+</section>
+<section id="gamma-numerically" class="slide level2">
+<h2>Gamma Numerically</h2>
+<p>The first derivative of the first derivative:</p>
+<p><span class="math display">
+\begin{aligned}
+f''(x) &amp;\approx \frac{\frac{f(x+\Delta) - f(x)}{\Delta} - \frac{f(x) - f(x-\Delta)}{\Delta}}{\Delta} \\[10pt]
+&amp;= \frac{f(x+\Delta) + f(x-\Delta) - 2f(x)}{\Delta^2}
+\end{aligned}
+</span></p>
+</section>
+<section id="choosing-delta" class="slide level2">
+<h2>Choosing <span class="math inline">\Delta</span></h2>
+<p>Too large and the approximation error dominates.</p>
+<p>Too small and the numerator subtracts two nearly equal floating point numbers, then divides by something small.</p>
+<p>The second derivative divides by <span class="math inline">\Delta^2</span>. It is far more sensitive to the choice than the first.</p>
+</section></section>
+<section>
+<section id="portfolio-construction" class="title-slide slide level1 center">
+<h1>Portfolio Construction</h1>
+
+</section>
+<section id="risk-against-return" class="slide level2">
+<h2>Risk Against Return</h2>
+<p>Portfolio construction balances expected return against expected risk.</p>
+<p>Higher expected returns generally require taking higher risks.</p>
+</section>
+<section id="every-mix-is-a-point" class="slide level2">
+<h2>Every Mix Is a Point</h2>
+<p>Every combination of the available assets gives a pair, an expected return and a risk.</p>
+<p>Plot all of them and they fill a region.</p>
+</section>
+<section id="the-efficient-frontier" class="slide level2">
+<h2>The Efficient Frontier</h2>
+
+<img data-src="../figures/frontier-generic.png" style="width:70.0%" class="r-stretch quarto-figure-center"><p class="caption">The efficient frontier</p></section>
+<section id="the-left-edge" class="slide level2">
+<h2>The Left Edge</h2>
+<p>The efficient frontier is the left edge of the region, above the minimum risk point.</p>
+<p>The maximum return achievable for a given level of risk.</p>
+<p>Equivalently, and this matters shortly, the minimum risk for a given level of return.</p>
+</section>
+<section id="nothing-below-it" class="slide level2">
+<h2>Nothing Below It</h2>
+<p>For any portfolio inside the region there is one directly above it on the frontier, with the same risk and more return.</p>
+<p>The dashed lower branch is the extreme case. Same risk as the solid branch, less return.</p>
+<p>The minimum risk portfolio is where the two branches meet.</p>
+</section>
+<section id="the-markowitz-problem" class="slide level2">
+<h2>The Markowitz Problem</h2>
+<p>Harry Markowitz, Nobel Prize in Economics, 1990.</p>
+<p>Assume multivariate normality. Risk is portfolio variance.</p>
+<p><span class="math display">
+\max\ U(w) = w\mu^T - \frac{1}{2}\lambda\, w\Sigma w^T
+\qquad
+s.t.\ \sum_{1}^{n} w_i = 1
+</span></p>
+<p><span class="math inline">w</span> the weights, <span class="math inline">\mu</span> the expected returns, <span class="math inline">\Sigma</span> the covariance, <span class="math inline">\lambda</span> risk aversion.</p>
+</section>
+<section id="one-quadratic-form" class="slide level2">
+<h2>One Quadratic Form</h2>
+<p><span class="math inline">w\Sigma w^T</span> is fact 7 from Week 02 again.</p>
+<p>The whole optimization is that one quadratic form, traded against a linear term.</p>
+<p>Solve it for different <span class="math inline">\lambda</span> and each solution is a point on the frontier.</p>
+</section>
+<section id="nobody-knows-their-lambda" class="slide level2">
+<h2>Nobody Knows Their <span class="math inline">\lambda</span></h2>
+<p>Nobody has a quadratic utility function.</p>
+<p>Asking someone for their <span class="math inline">\lambda</span> is nonsensical.</p>
+</section>
+<section id="the-minimum-variance-form" class="slide level2">
+<h2>The Minimum Variance Form</h2>
+<p>Invert the graph. The maximum return for a given risk is the minimum risk for a given return.</p>
+<p><span class="math display">
+\min\ \sigma^2 = w\Sigma w^T
+\qquad
+s.t.\ \sum_{1}^{n} w_i = 1, \quad w\mu^T = R
+</span></p>
+<p>Still a quadratic problem, and easily solved.</p>
+</section>
+<section id="bounds-on-the-weights" class="slide level2">
+<h2>Bounds on the Weights</h2>
+<p>Often we disallow shorting, meaning negative weights, or limit how much can be short.</p>
+<p>Those bounds are additional linear constraints. The problem stays a quadratic program.</p>
+</section>
+<section id="same-curve-different-dial" class="slide level2">
+<h2>Same Curve, Different Dial</h2>
+<p>Both forms trace the same frontier.</p>
+<p>The first sweeps it by varying <span class="math inline">\lambda</span>. The second by varying <span class="math inline">R</span>.</p>
+<p>Implement the second. <span class="math inline">R</span> is a number an investor can actually state.</p>
+</section>
+<section id="a-three-asset-example" class="slide level2">
+<h2>A Three Asset Example</h2>
+<p>No negative weights.</p>
+<table class="caption-top">
+<caption>Correlations, standard deviations, and expected returns</caption>
+<colgroup>
+<col style="width: 28%">
+<col style="width: 24%">
+<col style="width: 24%">
+<col style="width: 24%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">A1</th>
+<th style="text-align: right;">A2</th>
+<th style="text-align: right;">A3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">A1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.5</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A2</td>
+<td style="text-align: right;">0.5</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">A3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.5</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Std dev</strong></td>
+<td style="text-align: right;">0.20</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">0.05</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong><span class="math inline">E(r)</span></strong></td>
+<td style="text-align: right;">0.05</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">0.03</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tracing-it" class="slide level2">
+<h2>Tracing It</h2>
+<p>Solve the minimum variance problem once for each <span class="math inline">R</span> between the lowest and highest achievable return.</p>
+<p>Each solve returns a weight vector. Each weight vector is one point on the curve.</p>
+</section>
+<section id="the-frontier" class="slide level2">
+<h2>The Frontier</h2>
+
+<img data-src="../figures/efficient-frontier.png" style="width:70.0%" class="r-stretch quarto-figure-center"><p class="caption">Efficient frontier for the 3 asset example, no shorting</p></section>
+<section id="where-the-assets-sit" class="slide level2">
+<h2>Where the Assets Sit</h2>
+<p>A1 is on the frontier. It is the only way to reach the highest return.</p>
+<p>A3 is on it too, close to the lowest risk available.</p>
+<p>A2 sits inside. A mix of A1 and A3 beats holding A2 alone.</p>
+<p>That is diversification, and it comes entirely from the zero correlation between A1 and A3.</p>
+</section></section>
+<section>
+<section id="the-sharpe-ratio-and-the-capital-market-line" class="title-slide slide level1 center">
+<h1>The Sharpe Ratio and the Capital Market Line</h1>
+
+</section>
+<section id="sharpe" class="slide level2">
+<h2>Sharpe</h2>
+<p>William Sharpe and others, mid 1960s. The papers that led to CAPM.</p>
+<p>Sharpe shared the 1990 Nobel Prize with Markowitz and Merton Miller.</p>
+<p><span class="math display">
+SR = \frac{E\left( r_p \right) - r_{rf}}{\sigma_p}
+</span></p>
+<p>Expected return in excess of the risk free rate, in units of risk.</p>
+</section>
+<section id="two-investments" class="slide level2">
+<h2>Two Investments</h2>
+<p>Choose A or B, not both. Borrow and lend at the risk free rate of 5%.</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;"><span class="math inline">E(r)</span></th>
+<th style="text-align: right;"><span class="math inline">\sigma</span></th>
+<th style="text-align: right;"><span class="math inline">SR</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">A</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">0.3125</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">B</td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">0.3000</td>
+</tr>
+</tbody>
+</table>
+<p>The investor wants 8% risk.</p>
+</section>
+<section id="hit-the-risk-budget" class="slide level2">
+<h2>Hit the Risk Budget</h2>
+<p><strong>A.</strong> 50% in A, 50% in the risk free asset:</p>
+<p><span class="math display">
+E(r) = 7.5\%, \qquad Risk = \sqrt{0.5^2 \cdot 0.16^2} = 8\%, \qquad SR = 0.3125
+</span></p>
+<p><strong>B.</strong> 80% in B, 20% in the risk free asset:</p>
+<p><span class="math display">
+E(r) = 7.4\%, \qquad Risk = \sqrt{0.8^2 \cdot 0.10^2} = 8\%, \qquad SR = 0.3000
+</span></p>
+</section>
+<section id="choose-a" class="slide level2">
+<h2>Choose A</h2>
+<p>Same risk, more return.</p>
+<p>Each mix kept the Sharpe Ratio of the investment it was built from.</p>
+</section>
+<section id="more-risk-than-a" class="slide level2">
+<h2>More Risk Than A</h2>
+<p>Borrow 50% at the risk free rate and buy more A:</p>
+<p><span class="math display">
+E(r) = 150\% \cdot 10\% + (-50\%) \cdot 5\% = 12.5\%
+</span></p>
+<p><span class="math display">
+Risk = \sqrt{1.5^2 \cdot 0.16^2} = 24\%, \qquad SR = \frac{12.5 - 5}{24} = 0.3125
+</span></p>
+<p>The Sharpe Ratio survives leverage too.</p>
+</section>
+<section id="each-investment-with-cash" class="slide level2">
+<h2>Each Investment With Cash</h2>
+
+<img data-src="../figures/sharpe-line.png" style="width:70.0%" class="r-stretch quarto-figure-center"><p class="caption">Return against risk for each investment combined with the risk free asset</p></section>
+<section id="two-points-fix-the-line" class="slide level2">
+<h2>Two Points Fix the Line</h2>
+<p>The risk free asset, at <span class="math inline">\sigma = 0</span> and <span class="math inline">\mu = r_{rf}</span>. The line starts there.</p>
+<p>The investment itself, at <span class="math inline">\left( \sigma_p, E(r_p) \right)</span>.</p>
+<p><span class="math display">
+\text{slope} = \frac{E\left( r_p \right) - r_{rf}}{\sigma_p - 0} = SR
+</span></p>
+</section>
+<section id="the-sharpe-ratio-is-the-slope" class="slide level2">
+<h2>The Sharpe Ratio Is the Slope</h2>
+<p>Not an analogy. The definition of the ratio and the rise over run of the line are the same expression.</p>
+<p>Every mix of the investment and cash lands on the line, so the ratio holds at every level of risk.</p>
+<p>A steeper line through the same intercept is above a shallower one everywhere to the right. A beats B at every risk budget, not just 8%.</p>
+</section>
+<section id="why-the-locus-is-a-line" class="slide level2">
+<h2>Why the Locus Is a Line</h2>
+<p>Two of the risk measure properties from Week 05.</p>
+<p><strong>Positive homogeneity.</strong> <span class="math inline">q(\lambda X) = \lambda\, q(X)</span>. Holding a fraction <span class="math inline">w</span> of the investment scales its risk by exactly <span class="math inline">w</span>.</p>
+<p><strong>Translation.</strong> Adding a certain amount does not change dispersion. The cash leg contributes nothing to <span class="math inline">\sigma</span>.</p>
+</section>
+<section id="both-coordinates-are-linear" class="slide level2">
+<h2>Both Coordinates Are Linear</h2>
+<p><span class="math inline">w</span> in the investment and <span class="math inline">1-w</span> in cash:</p>
+<p><span class="math display">
+\sigma\left( w\, r_p + (1-w) r_{rf} \right) = w\, \sigma_p
+</span></p>
+<p><span class="math display">
+E\left( w\, r_p + (1-w) r_{rf} \right) = r_{rf} + w\left( E(r_p) - r_{rf} \right)
+</span></p>
+<p>Both linear in the same <span class="math inline">w</span>. That is a straight line, and the ratio of the two slopes is the Sharpe Ratio.</p>
+</section>
+<section id="a-caveat-on-terms" class="slide level2">
+<h2>A Caveat on Terms</h2>
+<p>Standard deviation is subadditive, positively homogeneous, and satisfies the translation property.</p>
+<p>It is not monotone. A portfolio that loses more in every state can still have the lower standard deviation.</p>
+<p>So it is a deviation measure, not a coherent risk measure in Artzner’s sense. The two properties used here are ones it has.</p>
+</section>
+<section id="variance-bends-the-line" class="slide level2">
+<h2>Variance Bends the Line</h2>
+<p>Variance is not positively homogeneous:</p>
+<p><span class="math display">
+\operatorname{var}(wX) = w^2 \operatorname{var}(X)
+</span></p>
+<p>Plot the same picture against variance and every one of these lines becomes a curve.</p>
+<p>That is why the axis is <span class="math inline">\sigma</span>.</p>
+</section>
+<section id="the-steepest-line" class="slide level2">
+<h2>The Steepest Line</h2>
+<p>If the slope is what we want, and we are choosing among every portfolio on an efficient frontier rather than between two investments:</p>
+<p>Which point on the frontier gives the steepest line out of <span class="math inline">r_{rf}</span>?</p>
+</section>
+<section id="the-capital-market-line" class="slide level2">
+<h2>The Capital Market Line</h2>
+
+<img data-src="../figures/capital-market-line.png" style="width:70.0%" class="r-stretch quarto-figure-center"><p class="caption">The capital market line, tangent at the maximum Sharpe Ratio portfolio</p></section>
+<section id="tangency" class="slide level2">
+<h2>Tangency</h2>
+<p>The capital market line, CML, is tangent to the efficient frontier at the maximum Sharpe Ratio portfolio.</p>
+<p>Also called the super efficient portfolio, or the market portfolio.</p>
+<p>Mixing it with cash gives a return at least as high as the frontier at every level of risk.</p>
+</section>
+<section id="on-the-three-assets" class="slide level2">
+<h2>On the Three Assets</h2>
+<p>At a 3.5% risk free rate:</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Weights</td>
+<td style="text-align: right;"><span class="math inline">\tfrac{2}{3}</span> A1, <span class="math inline">\tfrac{1}{3}</span> A2, 0 A3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\sigma</span></td>
+<td style="text-align: right;">0.153</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">E(r)</span></td>
+<td style="text-align: right;">4.67%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">SR</span></td>
+<td style="text-align: right;">0.0764</td>
+</tr>
+</tbody>
+</table>
+<p>A3 drops out entirely, despite being the lowest risk asset available.</p>
+</section>
+<section id="plot-against-sigma" class="slide level2">
+<h2>Plot Against <span class="math inline">\sigma</span></h2>
+<p>The CML is a straight line in <span class="math inline">(\sigma, \mu)</span> space.</p>
+<p>In <span class="math inline">(\sigma^2, \mu)</span> space it is a square root curve.</p>
+<p>The tangency argument only reads correctly against <span class="math inline">\sigma</span>.</p>
+</section>
+<section id="the-market-portfolio" class="slide level2">
+<h2>The Market Portfolio</h2>
+<p>Combine CAPM with the Efficient Market Hypothesis.</p>
+<p>The market portfolio is every asset, weighted by its current market capitalization.</p>
+</section>
+<section id="borrowing-is-not-free" class="slide level2">
+<h2>Borrowing Is Not Free</h2>
+<p>Most investors cannot borrow at the risk free rate.</p>
+<p>The CML above the market portfolio is unobtainable. Borrowing at a higher rate flattens the line past that point.</p>
+<p>Or the investor simply invests along the efficient frontier.</p>
+</section>
+<section id="capm" class="slide level2">
+<h2>CAPM</h2>
+<p>Rational investors hold only the market portfolio and the risk free asset. One source of systematic risk.</p>
+<p><span class="math display">
+r_s - r_{rf} = \alpha + \beta\left( r_{mkt} - r_{rf} \right) + \epsilon_s
+</span></p>
+<p>Excess return on the asset is alpha, plus beta times the excess return on the market, plus idiosyncratic error.</p>
+<p>In the long run, theory says <span class="math inline">\alpha = 0</span>.</p>
+</section>
+<section id="it-is-a-regression" class="slide level2">
+<h2>It Is a Regression</h2>
+<p>That equation is OLS, and everything in Week 02 applies.</p>
+<p><span class="math inline">\beta</span> is a scaled covariance, with the usual standard error.</p>
+<p><span class="math inline">\alpha</span> is an intercept. Its <span class="math inline">t</span>-statistic is what anyone claiming skill has to clear.</p>
+</section></section>
+<section>
+<section id="arbitrage-pricing-theory" class="title-slide slide level1 center">
+<h1>Arbitrage Pricing Theory</h1>
+
+</section>
+<section id="ross-1976" class="slide level2">
+<h2>Ross, 1976</h2>
+<p>Financial assets as a linear function of several sources of risk and return.</p>
+<p><span class="math display">
+E\left( r_s - r_{rf} \right) = \alpha_s + \sum_{i=1}^{n} \beta_i E\left( f_i \right),
+\qquad
+E\left( f_i \right) = RP_i
+</span></p>
+<p>Each factor is a systematic risk, and each contributes to expected return.</p>
+</section>
+<section id="risk-premia" class="slide level2">
+<h2>Risk Premia</h2>
+<p><span class="math inline">RP_i</span> is the factor’s risk premium.</p>
+<p>The expected return in excess of the risk free rate for taking on that factor’s risk.</p>
+</section>
+<section id="capm-is-one-factor" class="slide level2">
+<h2>CAPM Is One Factor</h2>
+<p><span class="math display">
+r_s - r_{rf} = \alpha + \beta\left( r_{mkt} - r_{rf} \right) + \epsilon_s
+</span></p>
+<p>An APT model with a single factor, the market.</p>
+</section>
+<section id="where-factors-come-from" class="slide level2">
+<h2>Where Factors Come From</h2>
+<p>Investors who cannot borrow at the risk free rate reach for return above the market portfolio.</p>
+<p>That is a leading explanation for why some kinds of stocks beat CAPM and EMH over long periods.</p>
+<p>Value stocks and low beta stocks both show long term positive alpha.</p>
+</section>
+<section id="apt-does-not-name-them" class="slide level2">
+<h2>APT Does Not Name Them</h2>
+<p>APT says nothing about what the factors are.</p>
+<p>It says only that if returns have a linear factor structure, no arbitrage forces expected returns into that form.</p>
+<p>Choosing the factors is a separate problem. It is Week 09.</p>
+</section></section>
+<section>
+<section id="extensions-to-capm" class="title-slide slide level1 center">
+<h1>Extensions to CAPM</h1>
+
+</section>
+<section id="fama-and-french" class="slide level2">
+<h2>Fama and French</h2>
+<p>Eugene Fama, Nobel Prize 2013, and Kenneth French. 1993.</p>
+<p>Testing CAPM turned up anomalies. Stocks with a low price to book and stocks with a small market cap outperformed.</p>
+<p>They added factors for value and size.</p>
+<p>They did not try to say why the anomalies exist. Only to model the return.</p>
+</section>
+<section id="market-neutral-factors" class="slide level2">
+<h2>Market Neutral Factors</h2>
+<p>Each factor is a long short portfolio.</p>
+<p><strong>HML.</strong> High minus low book to price. Long value, short expensive.</p>
+<p><strong>SMB.</strong> Small minus big. Long small, short large.</p>
+<p><span class="math display">
+\begin{aligned}
+r_s - r_{rf} = \alpha &amp;+ \beta_{mkt}\left( r_{mkt} - r_{rf} \right) \\
+&amp;+ \beta_{SMB}SMB + \beta_{HML}HML + \epsilon_s
+\end{aligned}
+</span></p>
+</section>
+<section id="carhart-momentum" class="slide level2">
+<h2>Carhart Momentum</h2>
+<p>Mark Carhart, 1997, adds momentum. Assets that have done well recently tend to keep doing well.</p>
+<p>Week 02 gave the process. An autoregressive term with <span class="math inline">\beta &gt; 0</span> makes a positive move more likely to be followed by another.</p>
+<p><strong>UMD.</strong> Up minus down. Long high momentum, short low momentum.</p>
+<p><span class="math display">
+\begin{aligned}
+r_s - r_{rf} = \alpha &amp;+ \beta_{mkt}\left( r_{mkt} - r_{rf} \right) + \beta_{SMB}SMB \\
+&amp;+ \beta_{HML}HML + \beta_{UMD}UMD + \epsilon_s
+\end{aligned}
+</span></p>
+</section>
+<section id="factors-come-and-go" class="slide level2">
+<h2>Factors Come and Go</h2>
+<p>Academics have debated these and searched for new ones for decades.</p>
+<p>Most agree size is no longer a priced factor.</p>
+<p>Fama and French split HML into two: profitable companies, RMW, and companies that invest in their business, CMA.</p>
+</section>
+<section id="value-after-book-value" class="slide level2">
+<h2>Value After Book Value</h2>
+<p>A lot of a modern company’s value does not show up in accounting book value.</p>
+<p>Value has significantly underperformed for 10 years or more. Some ask whether it is a factor at all.</p>
+<p>Others try to revive it by moving away from book value.</p>
+</section>
+<section id="quality" class="slide level2">
+<h2>Quality</h2>
+<p>RMW and CMA were early attempts at quality.</p>
+<p>Some consider quality a priced factor.</p>
+<p>Like value, there is no good single definition of it.</p>
+</section>
+<section id="where-this-goes" class="slide level2">
+<h2>Where This Goes</h2>
+<p>Every model here takes the factors as given and estimates the betas.</p>
+<p>Week 08 uses them to attribute realized risk and return.</p>
+<p>Week 09 builds the factors.</p>
+
+</section></section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="week07-slides_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="week07-slides_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="week07-slides_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="week07-slides_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="week07-slides_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="week07-slides_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="week07-slides_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="week07-slides_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="week07-slides_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'none',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1280,
+
+        height: 800,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>

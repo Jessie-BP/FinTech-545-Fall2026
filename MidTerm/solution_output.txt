@@ -1,0 +1,200 @@
+Problem 1
+---------
+Days jointly observed
+              x1        x2        x3        x4        x5
+  x1          41        32        31        36        34
+  x2          32        41        28        34        35
+  x3          31        28        36        30        30
+  x4          36        34        30        41        34
+  x5          34        35        30        34        42
+complete rows: 18 of 50
+(a) Pairwise correlation
+              x1        x2        x3        x4        x5
+  x1      1.0000    0.3328    0.4185    0.2553    0.7323
+  x2      0.3328    1.0000    0.2510    0.2877    0.7875
+  x3      0.4185    0.2510    1.0000    0.4836    0.6843
+  x4      0.2553    0.2877    0.4836    1.0000    0.7826
+  x5      0.7323    0.7875    0.6843    0.7826    1.0000
+(b) Full sample variance: 4.060739e-04  4.800663e-04  1.511102e-04  8.417388e-04  2.731496e-04
+    Full sample sd:       0.02015  0.02191  0.01229  0.02901  0.01653
+(c) Eigenvalues of the pairwise correlation: [-0.08928, 0.46134, 0.71909, 0.82344, 3.08542]
+    Eigenvector of the negative eigenvalue: [-0.287, -0.365, -0.157, -0.342, 0.802]
+    Complete case eigenvalues, for comparison: [0.0123, 0.316, 0.7564, 1.0422, 2.8731]
+    Eigenvalues of the covariance built from it: ["-2.8828e-05", "9.5045e-05", "2.9888e-04", "4.7396e-04", "1.3131e-03"]
+Higham Converged in 26 iterations.
+(d) Higham nearest PSD correlation
+              x1        x2        x3        x4        x5
+  x1      1.0000    0.3495    0.4259    0.2708    0.6946
+  x2      0.3495    1.0000    0.2606    0.3075    0.7393
+  x3      0.4259    0.2606    1.0000    0.4925    0.6626
+  x4      0.2708    0.3075    0.4925    1.0000    0.7377
+  x5      0.6946    0.7393    0.6626    0.7377    1.0000
+    Eigenvalues after Higham: [-0.0, 0.45008, 0.70348, 0.80671, 3.03973]
+    Change, Higham minus pairwise
+              x1        x2        x3        x4        x5
+  x1      0.0000    0.0166    0.0075    0.0155   -0.0377
+  x2      0.0166    0.0000    0.0096    0.0198   -0.0482
+  x3      0.0075    0.0096    0.0000    0.0089   -0.0217
+  x4      0.0155    0.0198    0.0089    0.0000   -0.0450
+  x5     -0.0377   -0.0482   -0.0217   -0.0450    0.0000
+    Frobenius distance: 0.12143
+(e) Covariance, D R D
+              x1        x2        x3        x4        x5
+  x1    4.0607e-04  1.5429e-04  1.0551e-04  1.5831e-04  2.3132e-04
+  x2    1.5429e-04  4.8007e-04  7.0189e-05  1.9549e-04  2.6773e-04
+  x3    1.0551e-04  7.0189e-05  1.5111e-04  1.7565e-04  1.3461e-04
+  x4    1.5831e-04  1.9549e-04  1.7565e-04  8.4174e-04  3.5372e-04
+  x5    2.3132e-04  2.6773e-04  1.3461e-04  3.5372e-04  2.7315e-04
+    Eigenvalues: ["-1.6705e-13", "9.4700e-05", "2.9198e-04", "4.6230e-04", "1.3032e-03"]
+Problem 2
+---------
+n = 500 returns, mean XYZ = 3.775e-18, sd XYZ = 0.019604
+  alpha 0.05   VaR 3.2245%   ES 4.0436%
+  alpha 0.01   VaR 4.5605%   ES 5.2248%
+  ES / VaR at 5%: 1.2540, at 1%: 1.1457
+  For reference, 100 shares at 74.52 = 7451.83.  VaR95 = 240.28, VaR99 = 339.84, ES95 = 301.33, ES99 = 389.34
+  OLS: alpha -0.000304  beta 1.1933  resid sd 0.014605  R^2 0.4461
+  Modelled: mean 2.548e-18  sd 0.019614  (sample sd 0.019604, ratio 1.000556)
+  modelled alpha 0.05   VaR 3.2263%   ES 4.0459%
+  modelled alpha 0.01   VaR 4.5630%   ES 5.2277%
+Problem 3
+---------
+1000 returns per stock
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+(a) Sample moments
+  S1   mean 0.000904  sd 0.011826  skew -0.040  excess kurtosis -0.033
+  S2   mean 0.000800  sd 0.015348  skew +0.071  excess kurtosis 5.477
+  S3   mean 0.000424  sd 0.018898  skew -1.321  excess kurtosis 4.696
+  S4   mean 0.000780  sd 0.009933  skew -0.035  excess kurtosis -0.133
+  S5   mean 0.000709  sd 0.018951  skew -0.307  excess kurtosis 2.733
+  S6   mean 0.000805  sd 0.015085  skew -1.202  excess kurtosis 4.700
+  S7   mean 0.000693  sd 0.013674  skew -0.041  excess kurtosis -0.123
+  S8   mean 0.000374  sd 0.017112  skew -0.444  excess kurtosis 6.529
+  S9   mean 0.001746  sd 0.020647  skew -1.083  excess kurtosis 4.461
+  S10  mean 0.000165  sd 0.013061  skew -0.696  excess kurtosis 5.583
+(a) Fitted parameters
+  S1   Normal mu 0.000904 sigma 0.011826 | T mu 0.000904 sigma 0.011819 nu 15356.994 | NIG mu 0.076557 alpha 2086.486 beta -588.204 delta 0.257473
+  S2   Normal mu 0.000800 sigma 0.015348 | T mu 0.000581 sigma 0.011673 nu 4.858 | NIG mu -0.000305 alpha 73.207 beta 4.864 delta 0.016593
+  S3   Normal mu 0.000424 sigma 0.018898 | T mu 0.002291 sigma 0.013657 nu 4.161 | NIG mu 0.010474 alpha 79.837 beta -36.345 delta 0.019657
+  S4   Normal mu 0.000780 sigma 0.009933 | T mu 0.000780 sigma 0.009927 nu 9935.238 | NIG mu 0.089549 alpha 3368.189 beta -984.958 delta 0.290287
+  S5   Normal mu 0.000709 sigma 0.018951 | T mu 0.000833 sigma 0.015577 nu 6.289 | NIG mu 0.001497 alpha 73.577 beta -2.233 delta 0.025958
+  S6   Normal mu 0.000805 sigma 0.015085 | T mu 0.002445 sigma 0.010655 nu 3.824 | NIG mu 0.008272 alpha 91.683 beta -41.686 delta 0.014628
+  S7   Normal mu 0.000693 sigma 0.013674 | T mu 0.000693 sigma 0.013666 nu 15588.111 | NIG mu 0.077482 alpha 1635.964 beta -443.713 delta 0.272611
+  S8   Normal mu 0.000374 sigma 0.017112 | T mu 0.000654 sigma 0.011424 nu 3.483 | NIG mu 0.001183 alpha 50.623 beta -2.887 delta 0.014161
+  S9   Normal mu 0.001746 sigma 0.020647 | T mu 0.003383 sigma 0.015310 nu 4.385 | NIG mu 0.010128 alpha 63.159 beta -22.927 delta 0.021515
+  S10  Normal mu 0.000165 sigma 0.013061 | T mu 0.000405 sigma 0.009427 nu 4.121 | NIG mu 0.001049 alpha 76.686 beta -5.368 delta 0.012595
+(a) Log likelihood and criteria, with the gap to the best in each column
+  S1   Normal  LL   3019.003  AICc   -6033.993 (+   0.00)  BIC   -6024.190 (+   0.00)
+  S1   T       LL   3019.002  AICc   -6031.981 (+   2.01)  BIC   -6017.281 (+   6.91)
+  S1   NIG     LL   3019.128  AICc   -6030.215 (+   3.78)  BIC   -6010.624 (+  13.57)
+  S2   Normal  LL   2758.359  AICc   -5512.705 (+ 114.65)  BIC   -5502.902 (+ 109.76)
+  S2   T       LL   2816.692  AICc   -5627.360 (+   0.00)  BIC   -5612.661 (+   0.00)
+  S2   NIG     LL   2815.052  AICc   -5622.063 (+   5.30)  BIC   -5602.472 (+  10.19)
+  S3   Normal  LL   2550.262  AICc   -5096.512 (+ 185.13)  BIC   -5086.709 (+ 175.34)
+  S3   T       LL   2622.244  AICc   -5238.463 (+  43.18)  BIC   -5223.764 (+  38.29)
+  S3   NIG     LL   2644.841  AICc   -5281.641 (+   0.00)  BIC   -5262.050 (+   0.00)
+  S4   Normal  LL   3193.493  AICc   -6382.973 (+   0.00)  BIC   -6373.170 (+   0.00)
+  S4   T       LL   3193.490  AICc   -6380.955 (+   2.02)  BIC   -6366.256 (+   6.91)
+  S4   NIG     LL   3193.580  AICc   -6379.120 (+   3.85)  BIC   -6359.529 (+  13.64)
+  S5   Normal  LL   2547.453  AICc   -5090.895 (+  59.97)  BIC   -5081.091 (+  55.08)
+  S5   T       LL   2578.447  AICc   -5150.869 (+   0.00)  BIC   -5136.170 (+   0.00)
+  S5   NIG     LL   2577.125  AICc   -5146.210 (+   4.66)  BIC   -5126.619 (+   9.55)
+  S6   Normal  LL   2775.608  AICc   -5547.203 (+ 190.19)  BIC   -5537.399 (+ 180.41)
+  S6   T       LL   2847.382  AICc   -5688.740 (+  48.66)  BIC   -5674.041 (+  43.76)
+  S6   NIG     LL   2872.718  AICc   -5737.395 (+   0.00)  BIC   -5717.805 (+   0.00)
+  S7   Normal  LL   2873.853  AICc   -5743.694 (+   0.00)  BIC   -5733.890 (+   0.00)
+  S7   T       LL   2873.851  AICc   -5741.678 (+   2.02)  BIC   -5726.979 (+   6.91)
+  S7   NIG     LL   2873.964  AICc   -5739.888 (+   3.81)  BIC   -5720.297 (+  13.59)
+  S8   Normal  LL   2649.559  AICc   -5295.106 (+ 198.18)  BIC   -5285.303 (+ 193.29)
+  S8   T       LL   2749.656  AICc   -5493.288 (+   0.00)  BIC   -5478.588 (+   0.00)
+  S8   NIG     LL   2747.567  AICc   -5487.094 (+   6.19)  BIC   -5467.503 (+  11.09)
+  S9   Normal  LL   2461.759  AICc   -4919.506 (+ 146.00)  BIC   -4909.702 (+ 136.22)
+  S9   T       LL   2521.393  AICc   -5036.762 (+  28.75)  BIC   -5022.063 (+  23.86)
+  S9   NIG     LL   2536.775  AICc   -5065.510 (+   0.00)  BIC   -5045.919 (+   0.00)
+  S10  Normal  LL   2919.668  AICc   -5835.324 (+ 139.53)  BIC   -5825.521 (+ 134.64)
+  S10  T       LL   2990.441  AICc   -5974.857 (+   0.00)  BIC   -5960.158 (+   0.00)
+  S10  NIG     LL   2989.371  AICc   -5970.702 (+   4.16)  BIC   -5951.111 (+   9.05)
+10×3 DataFrame
+ Row │ Stock   AICc    BIC
+     │ String  String  String
+─────┼────────────────────────
+   1 │ S1      Normal  Normal
+   2 │ S2      T       T
+   3 │ S3      NIG     NIG
+   4 │ S4      Normal  Normal
+   5 │ S5      T       T
+   6 │ S6      NIG     NIG
+   7 │ S7      Normal  Normal
+   8 │ S8      T       T
+   9 │ S9      NIG     NIG
+  10 │ S10     T       T
+AICc and BIC agree on every stock: true
+(b) Kendall based R
+              S1        S2        S3        S4        S5        S6        S7        S8        S9       S10
+  S1    1.000  0.543  0.528  0.562  0.542  0.294  0.249  0.232  0.281  0.293
+  S2    0.543  1.000  0.564  0.530  0.523  0.330  0.233  0.246  0.310  0.276
+  S3    0.528  0.564  1.000  0.532  0.571  0.316  0.303  0.268  0.340  0.298
+  S4    0.562  0.530  0.532  1.000  0.568  0.306  0.233  0.269  0.296  0.299
+  S5    0.542  0.523  0.571  0.568  1.000  0.333  0.270  0.279  0.276  0.296
+  S6    0.294  0.330  0.316  0.306  0.333  1.000  0.535  0.524  0.539  0.547
+  S7    0.249  0.233  0.303  0.233  0.270  0.535  1.000  0.526  0.522  0.542
+  S8    0.232  0.246  0.268  0.269  0.279  0.524  0.526  1.000  0.520  0.524
+  S9    0.281  0.310  0.340  0.296  0.276  0.539  0.522  0.520  1.000  0.522
+  S10   0.293  0.276  0.298  0.299  0.296  0.547  0.542  0.524  0.522  1.000
+    Smallest eigenvalue of R: 0.382
+    Gaussian: LL 2110.022  k 0  AICc -4220.045  BIC -4220.045
+    t:        LL 2108.164  k 1  nu 100.00  AICc -4214.323  BIC -4209.419
+    t minus Gaussian: AICc +5.722  BIC +10.625   (positive favours the Gaussian)
+      nu     5  t copula LL 1756.043
+      nu    10  t copula LL 1997.024
+      nu    20  t copula LL 2074.254
+      nu    50  t copula LL 2102.976
+      nu   100  t copula LL 2108.164
+    Largest |Spearman - Kendall R| entry: 0.0234
+(c) Current positions
+10×5 DataFrame
+ Row │ Stock   Book    Holding  Price     Value
+     │ String  String  Int64    Float64   Float64
+─────┼────────────────────────────────────────────
+   1 │ S1      A           500   96.659   48329.5
+   2 │ S2      A           200  233.487   46697.4
+   3 │ S3      A           300   80.8909  24267.3
+   4 │ S4      A           100  435.968   43596.8
+   5 │ S5      A           800   47.1593  37727.5
+   6 │ S6      B           150  308.844   46326.6
+   7 │ S7      B           250  160.577   40144.3
+   8 │ S8      B           600   43.4098  26045.9
+   9 │ S9      B           300  327.496   98248.7
+  10 │ S10     B            75  326.832   24512.4
+    Book A 200618.44   Book B 235277.92   Total 435896.36
+    1000 replications in 61 s
+(c) Median of 1000 runs of 5000 draws, with the 99% band
+  S1      value    48329.48  VaR95    897.52 [   854.65,    946.56]   ES95   1133.71 [  1084.34,   1187.21]
+  S2      value    46697.43  VaR95   1078.33 [  1014.20,   1150.04]   ES95   1563.48 [  1450.05,   1690.14]
+  S3      value    24267.28  VaR95    803.64 [   747.07,    867.42]   ES95   1202.22 [  1123.40,   1301.63]
+  S4      value    43596.81  VaR95    677.95 [   647.97,    711.56]   ES95    858.43 [   819.99,    896.93]
+  S5      value    37727.45  VaR95   1102.88 [  1038.54,   1169.72]   ES95   1540.04 [  1444.90,   1647.76]
+  S6      value    46326.64  VaR95   1213.36 [  1121.64,   1307.17]   ES95   1849.65 [  1725.39,   1991.11]
+  S7      value    40144.31  VaR95    874.93 [   835.16,    919.05]   ES95   1105.13 [  1054.99,   1153.99]
+  S8      value    26045.88  VaR95    644.72 [   601.99,    692.20]   ES95   1015.55 [   925.53,   1130.64]
+  S9      value    98248.71  VaR95   3379.29 [  3124.63,   3629.07]   ES95   5110.01 [  4730.72,   5511.87]
+  S10     value    24512.38  VaR95    478.63 [   450.45,    512.27]   ES95    718.29 [   653.91,    787.69]
+  Book A  value   200618.44  VaR95   3621.55 [  3434.04,   3854.00]   ES95   4894.71 [  4633.13,   5157.46]
+  Book B  value   235277.92  VaR95   5427.64 [  4996.27,   5829.12]   ES95   7834.49 [  7267.35,   8378.44]
+  Total   value   435896.36  VaR95   7663.99 [  7177.37,   8103.76]   ES95  10648.33 [  9931.89,  11349.16]
+    Sum of stock VaR, A 4560.32 vs book 3621.55; B 6590.92 vs book 5427.64; books 9049.19 vs total 7663.99; all stocks 11151.24
+    Sum of stock ES,  A 6297.88 vs book 4894.71; B 9798.63 vs book 7834.49; books 12729.20 vs total 10648.33; all stocks 16096.51
+    Spearman R run inside the Kendall bands on every line: true
+      S1      VaR95    872.69  ES95   1110.30  
+      S2      VaR95   1110.73  ES95   1607.85  
+      S3      VaR95    806.38  ES95   1172.84  
+      S4      VaR95    679.10  ES95    872.35  
+      S5      VaR95   1133.34  ES95   1635.48  
+      S6      VaR95   1213.13  ES95   1862.91  
+      S7      VaR95    854.72  ES95   1091.43  
+      S8      VaR95    629.54  ES95   1004.19  
+      S9      VaR95   3366.97  ES95   4873.07  
+      S10     VaR95    475.52  ES95    715.78  
+      Book A  VaR95   3663.70  ES95   4940.01  
+      Book B  VaR95   5346.30  ES95   7449.93  
+      Total   VaR95   7490.00  ES95  10079.92  

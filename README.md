@@ -41,7 +41,7 @@ as `Week 05 - Expected Shortfall and Copulas.pdf` rather than `week05.pdf`.
 
 Decks live in `Week0N/slides/`, one level below the notes. That keeps them out of
 the `Week*/week*.qmd` wildcard `make` uses, which would otherwise try to render a
-deck as an article PDF, and out of the way of `make clean`. Weeks 02 through 08
+deck as an article PDF, and out of the way of `make clean`. Weeks 02 through 09
 have decks so far. One on its own:
 
 ```

@@ -18,6 +18,12 @@ format:
         % header at the bottom of a page, break, and repeat the header on the
         % next page with no rows under it. Require room for a few lines first.
         \AtBeginEnvironment{longtable}{\Needspace*{8\baselineskip}}
+        % A long file name in a code span has no break points, so TeX runs it
+        % into the margin rather than moving it. Make the underscore a legal
+        % break so names like week09_07_portfolio_construction.jl can wrap.
+        \newcommand{\breakableunderscore}{\char`\_\allowbreak}
+        \let\origtexttt\texttt
+        \renewcommand{\texttt}[1]{{\ttfamily\let\_\breakableunderscore #1}}
     number-sections: true
     toc: true
     toc-depth: 2
@@ -43,11 +49,13 @@ $$
 
 free parameters. For $n = 100$ that is 5,050 numbers. The data available to estimate them is $T \times n$.
 
-`DailyReturn.csv` from Week 08 has 100 stocks (plus SPY) and $T = 60$ daily observations. We are estimating 5,050 parameters from 6,000 data points.
+Our data is the 100 largest stocks in SPY, with $T = 60$ daily returns from 8 July to 30 September 2026. We are estimating 5,050 parameters from 6,000 data points.
+
+The files are in `Week09/data`, and `get_data.py` there rebuilds them. Prices come from Yahoo Finance and the Fama French factors from Ken French's data library. The constituents and their float adjusted market caps come from State Street's SPY holdings file. The window ends where the Fama French file ends, so every model is fit on the same 60 days.
 
 ## What Actually Breaks
 
-Compute the sample covariance of the 100 stocks and look at the eigenvalues.
+Compute the sample covariance of the 100 stocks and look at the eigenvalues. The code for this section and the next is in `week09_01_singular_covariance.jl`.
 
 | $n$ | $T$ | Parameters | Rank of $\widehat{\Sigma}$ | $\lambda_{\min}$ | Non-zero columns in $L$ |
 |--:|--:|--:|--:|--:|--:|
@@ -57,11 +65,11 @@ Compute the sample covariance of the 100 stocks and look at the eigenvalues.
 
 The rank is $\min(T-1, n) = 59$. This is not an estimation error, it is a certainty. A sum of $T$ rank-one outer products cannot have rank greater than $T$, and centering the data costs one more. With $n > T$ the sample covariance is always singular.
 
-Be careful about what has broken here. The PD Cholesky algorithm fails. The PSD version from Week 03 does not -- it returns a valid root $L$ with 41 zero columns and reproduces $\widehat{\Sigma} = LL'$ to $1.5 \times 10^{-16}$. The Week 03 PCA simulation works too. Drop the zero eigenvalues and simulate the system from 59 random draws instead of 100.
+Be careful about what has broken here. The PD Cholesky algorithm fails. The PSD version from Week 03, `chol_psd!` in the course library, does not -- it returns a valid root $L$ with 41 zero columns and reproduces $\widehat{\Sigma} = LL'$ to $9.9 \times 10^{-16}$. Of those 41, 38 are exactly zero. The other 3 come from pivots that rounding pushed slightly positive instead of slightly negative, and they survive at around $10^{-8}$, six orders of magnitude below the real columns. They carry no variance in any sense that matters. The Week 03 PCA simulation works too. Drop the zero eigenvalues and simulate the system from 59 random draws instead of 100.
 
 So we can factor the matrix and we can simulate from it. That is the problem.
 
-## What the Factorization Cannot Tell Us
+## What the Factorization Cannot Tell Us {#sec-nullspace}
 
 $L$ has rank 59. Every simulated return vector $r = Lz$ lies in a 59 dimensional subspace of $\mathbb{R}^{100}$, and that subspace is the span of the 60 demeaned historical observations.
 
@@ -69,20 +77,20 @@ No matter how many scenarios we draw, each one is a linear combination of days w
 
 The matrix is not silent about those directions. It says they have exactly zero variance.
 
-To see what that costs, estimate the covariance on the first 30 days only. The null space is then 71 dimensional. Pick any portfolio in that null space with weights summing to 1. The one below has an 8.3% maximum weight and 2.4x gross exposure, which is an ordinary looking portfolio.
+To see what that costs, estimate the covariance on the first 30 days only. The null space is then 71 dimensional. Pick any portfolio in that null space with weights summing to 1. The one below has a 5.4% maximum weight and 1.5x gross exposure, which is an ordinary looking portfolio. `week09_01_singular_covariance.jl` builds it and produces every row of @tbl-nullspace.
 
 | | Value |
 |:--|--:|
 | Forecast volatility (in-sample) | 0% to numerical precision |
 | Realized volatility, same 30 days | $\sim10^{-14}$% |
-| Realized volatility, next 30 days | 10.50% |
-| FF3 factor model forecast, same portfolio | 8.09% |
+| Realized volatility, next 30 days | 6.82% |
+| FF3 factor model forecast, same portfolio | 7.38% |
 
 : A portfolio the sample covariance calls riskless {#tbl-nullspace}
 
-The estimate says the portfolio is riskless and is internally consistent about it. Out of sample it runs at 10.5% annualized. The factor model, which never assigns zero risk to anything, would have told you 8.09%.
+The estimate says the portfolio is riskless and is internally consistent about it. Out of sample it runs at 6.8% annualized. The factor model, which never assigns zero risk to anything, would have told you 7.38%.
 
-Run a minimum variance optimization on all 60 days using a pseudo-inverse and the largest weight comes out at 350%. The optimizer is not finding a low risk portfolio. It is finding the direction where the estimate is most confidently wrong.
+Run a minimum variance optimization on all 60 days using a pseudo-inverse and the answer depends on a numerical cutoff, not on the data. The pseudo-inverse needs a tolerance below which an eigenvalue counts as zero. With Julia's default, it drops the 41 zero eigenvalues and returns weights running from 6.2% long to 5.1% short at 2.23x gross. Tighten the tolerance so that it keeps some of the $10^{-18}$ rounding noise and the largest weight jumps to 49% at 7.35x gross. Neither is the true minimizer. Under the sample covariance the minimum variance is exactly zero, achieved by any null space portfolio like the one above. The optimizer is not finding a low risk portfolio. It is finding whatever the estimate, or the cutoff you picked, says is riskless.
 
 ## Two Ways Out
 
@@ -100,7 +108,7 @@ $$
 
 and estimate 406 parameters instead of 5,050. This is full rank and invertible for any $T$. The rank comes from the structure, not from a patch. Every asset gets its own strictly positive specific variance, so no portfolio is ever called riskless.
 
-The trade is explicit. We buy conditioning, tractability, and interpretable exposures with a structural assumption. If the assumption is wrong we get a well behaved matrix that is confidently incorrect. Section 9 covers how to detect that.
+The trade is explicit. We buy conditioning, tractability, and interpretable exposures with a structural assumption. If the assumption is wrong we get a well behaved matrix that is confidently incorrect. @sec-wrong covers how to detect that.
 
 # The General Linear Factor Model
 
@@ -146,7 +154,7 @@ The model is the equation plus three assumptions. We violate all three later.
 
 2. $\operatorname{cov}(f_{k,t}, \varepsilon_{i,t}) = 0$. In a time series model fit by OLS this holds in sample by construction. It is a property of the residual, not a testable claim. Out of sample it is a real assumption.
 
-3. $\operatorname{cov}(\varepsilon_{i,t}, \varepsilon_{j,t}) = 0$ for $i \neq j$. The residual covariance $D$ is diagonal. This is the load bearing assumption. It is what collapses the parameter count and it is the one most often false. Section 9.3 shows how to test it.
+3. $\operatorname{cov}(\varepsilon_{i,t}, \varepsilon_{j,t}) = 0$ for $i \neq j$. The residual covariance $D$ is diagonal. This is the load bearing assumption. It is what collapses the parameter count and it is the one most often false. @sec-residcorr shows how to test it.
 
 Write $F = \operatorname{cov}(f)$ and $D = \operatorname{diag}(d_1,\dots,d_n)$. Using assumptions 2 and 3:
 
@@ -201,21 +209,23 @@ The $T - m - 1$ denominator matters. With $T = 60$ and $m = 3$ we divide by 56, 
 
 ### Fitting FF3 to our data
 
-Fit the three Fama French factors to the 100 stocks over the 60 days.
+Fit the three Fama French factors to the 100 stocks over the 60 days. The code is in `week09_02_ff3_time_series.jl`. It also reports the beta standard errors used below and the rank, conditioning and parameter count of the resulting $\Sigma$ from @sec-factorcov.
 
-| | NVDA | TSLA | XOM | MSFT | AAPL | CSCO | BRK-B | JNJ |
+| | TSLA | MSFT | NVDA | CSCO | AAPL | BRK-B | JNJ | XOM |
 |:--|--:|--:|--:|--:|--:|--:|--:|--:|
-| $\beta_{\text{Mkt}}$ | 2.452 | 1.726 | 1.171 | 1.148 | 0.980 | 0.774 | 0.652 | 0.276 |
-| $\beta_{\text{SMB}}$ | -0.666 | 1.111 | 0.046 | -0.678 | -0.180 | -0.388 | -0.295 | -0.578 |
-| $\beta_{\text{HML}}$ | -1.015 | -0.631 | 0.938 | -0.571 | -0.346 | 0.036 | 0.576 | 0.083 |
-| $R^2$ | 0.54 | 0.32 | 0.59 | 0.66 | 0.46 | 0.19 | 0.71 | 0.19 |
-| Ann. $\sigma$ | 61.0% | 73.6% | 27.9% | 25.7% | 26.0% | 23.8% | 15.3% | 15.2% |
+| $\beta_{\text{Mkt}}$ | 2.560 | 1.613 | 1.549 | 0.862 | 0.473 | 0.079 | 0.032 | -0.695 |
+| $\beta_{\text{SMB}}$ | -0.315 | -0.907 | -0.539 | -0.805 | 0.476 | 0.112 | 0.097 | -0.841 |
+| $\beta_{\text{HML}}$ | -0.410 | -0.609 | -0.712 | -0.219 | 0.777 | 0.278 | 0.623 | 0.624 |
+| $R^2$ | 0.40 | 0.30 | 0.31 | 0.12 | 0.07 | 0.03 | 0.09 | 0.35 |
+| Ann. $\sigma$ | 50.4% | 41.3% | 40.3% | 34.6% | 28.1% | 14.7% | 20.7% | 26.0% |
 
 : FF3 betas, selected stocks, 60 daily observations {#tbl-ff3betas}
 
-The signs are sensible. XOM has a large positive HML loading -- energy was the value trade in late 2021. NVDA has a market beta of 2.45 and a strongly negative HML, which is what a high multiple growth name should look like.
+The HML signs are sensible. TSLA, MSFT, and NVDA load negatively, which is what high multiple growth names should look like. XOM and JNJ load positively.
 
-Across all 100 stocks the mean $R^2$ is 0.377, ranging from 0.004 (MRK) to 0.817 (TFC). Three factors explain roughly 38% of a typical stock's daily variance. We come back to that number.
+The market betas need more care. XOM has a market beta of -0.70. Over these 60 days the market was driven by technology and energy went its own way. AAPL, BRK-B, and JNJ have $R^2$ below 0.10, so three factors say almost nothing about them in this window. Sixty days of data describe sixty days, not the company.
+
+Across all 100 stocks the mean $R^2$ is 0.205, ranging from 0.003 (RTX) to 0.548 (COF). Three factors explain about 20% of a typical stock's daily variance. We come back to that number.
 
 ### Full sample vs rolling betas
 
@@ -230,7 +240,7 @@ $$
 \operatorname{se}(\hat\beta_k) \approx \frac{\sigma_\varepsilon}{\sigma_{f_k}\sqrt{T}}
 $$
 
-Halving the window multiplies the standard error by $\sqrt{2}$. On our data the market beta standard error is already about 0.2. A rolling 20 day beta on daily data is mostly noise.
+Halving the window multiplies the standard error by $\sqrt{2}$. On our data the median market beta standard error is already 0.36. A beta of 1.15 and a beta of 0.85 are less than one standard error apart. A rolling 20 day beta on daily data is mostly noise.
 
 My opinion: on daily data use at least a year. If you need faster adaptation, use exponential weighting rather than a short window. You keep effective sample size while still down-weighting the past.
 
@@ -276,7 +286,7 @@ $W$ is a weighting matrix. Two standard choices:
 - $W = D^{-1}$, inverse specific variance. This is GLS and is efficient if $D$ is known.
 - $W = \operatorname{diag}(\sqrt{\text{mktcap}})$. A common vendor choice. It damps small illiquid names without letting the mega caps run the regression.
 
-The first requires $D$, which requires residuals, which requires the regression. In practice you iterate. Run OLS, get residuals, estimate $D$, re-run as GLS.
+The first requires $D$, which requires residuals, which requires the regression. In practice you iterate. Run OLS, get residuals, estimate $D$, re-run as GLS. @sec-wchoice compares these and the other common choices.
 
 ### Factor returns are portfolio returns
 
@@ -308,7 +318,21 @@ $$
 \sum_{k \in \text{industries}} c_k f_{k,t} = 0
 $$
 
-with $c_k$ either equal weights or industry cap weights. Solve through the KKT system.
+The $c_k$ are weights we choose. The constraint says the $c$ weighted average of the industry factor returns is zero every day. Each industry factor is then that industry's return relative to an "average industry," and $c$ defines what average means. The market factor carries everything the industries have in common.
+
+Three choices of $c_k$ are common.
+
+| Name | $c_k$ | Each industry counts | Industries measured against |
+|:--|:--|:--|:--|
+| Equal | 1 | once, whatever its size | the average industry |
+| Count | $n_k$, the number of stocks in industry $k$ | by how many stocks it holds | the average stock |
+| Cap | industry $k$'s share of total market cap | by its market value | the average dollar |
+
+: Common choices of constraint weights {#tbl-cchoice tbl-colwidths="[10,32,26,32]"}
+
+The difference is not small. Our universe has 28 Tech stocks and 7 in Staples. Under the equal constraint those two industries count the same. Under the count constraint Tech counts four times as much. Under the cap constraint Tech is 43.8% of the total and Staples 5.1%, so Tech counts more than eight times as much.
+
+Write the constraint as a row vector $C = [\,0 \;\; c_1 \;\cdots\; c_K\,]$, with a zero in the market's position, so it reads $C f_t = 0$. Solve the regression subject to it through the KKT system.
 
 $$
 \begin{bmatrix} B'WB & C' \\ C & 0 \end{bmatrix}
@@ -317,7 +341,150 @@ $$
 \begin{bmatrix} B'W r_t \\ 0 \end{bmatrix}
 $$
 
-The constraint is not cosmetic. It defines what "the market factor" means. With the sum to zero constraint the market factor return is the cap weighted market return and the industries are pure relative effects. Change the constraint and you change the interpretation of every factor.
+Our model uses the equal constraint. From here on the three are the equal, count, and cap constraints.
+
+The constraint is not cosmetic. It defines what "the market factor" means. With the cap constraint and cap weights in $W$, the market factor return is the cap weighted market return and the industries are pure relative effects. Change the constraint and you change the interpretation of every factor. @sec-mktfactor works through the other choices.
+
+### Choosing the weighting matrix {#sec-wchoice}
+
+$W$ sets how much each stock counts in the daily regression. It also sets what the factors are. Every factor return is a portfolio return through $\Omega = (B'WB)^{-1}B'W$, so a different $W$ is a different set of portfolios.
+
+@tbl-wchoice summarizes the four common choices.
+
+**Equal weights, $W = I$** -- ordinary least squares.
+
+- Needs nothing beyond returns, and the estimates are unbiased.
+- Inefficient. A stock at 104% specific volatility counts as much as one at 11%.
+- In a broad universe most names are small. Small caps run the regression and the factors track equal weighted portfolios.
+
+**Inverse specific variance, $W = D^{-1}$** -- GLS, and what our model uses.
+
+- The minimum variance estimator of $f_t$ when $D$ is right. Noisy stocks get little say.
+- Needs a first OLS pass to estimate $D$, and inherits that pass's estimation error. One bad $d_i$ moves the weights.
+- The factors tilt toward low specific risk names. On our data the market factor's largest weights are PEP and HD at 3.3% and DIS at 2.7%, none of which is above 0.7% of the cap weighted index. AAPL is 10.7% of that index and gets 0.4%. SNDK gets 0.08%. That is a low volatility portfolio, not an index.
+
+**Market cap, $W = \operatorname{diag}(\text{mktcap})$.**
+
+- In a market plus industry model with the cap constraint from @tbl-cchoice, the market factor is exactly the cap weighted index. Factor returns reconcile to the benchmark the portfolio manager is measured against.
+- The mega caps run the regression. An industry factor becomes close to the return of its two or three largest names, and their stock specific news lands in the factor.
+- Inefficient. A stock ten times larger does not have one tenth the specific variance.
+
+**Square root of cap, $W = \operatorname{diag}(\sqrt{\text{mktcap}})$** -- the common vendor choice.
+
+- Sits between equal and cap weights. It damps small illiquid names without letting the mega caps run the regression.
+- A stable stand-in for $D^{-1}$ that needs no first pass, because specific variance falls with size.
+- With the cap constraint, the market factor is close to the cap weighted index but not equal to it. The gap is the size effect inside each industry.
+
+| $W$ | Market factor tracks | Efficiency | Needs | Main weakness |
+|:--|:--|:--|:--|:--|
+| $I$ | equal weighted stocks | low | returns only | small caps dominate |
+| $D^{-1}$ | a low specific risk tilt | highest, if $D$ is right | a first pass for $D$ | not an index, inherits error in $D$ |
+| mktcap | the cap weighted index | low | market caps | mega caps dominate the factors |
+| $\sqrt{\text{mktcap}}$ | close to the cap weighted index | middle | market caps | only approximately the index |
+
+: Choices of regression weights. The second column assumes the count constraint with $I$ and the cap constraint with the cap based weights. {#tbl-wchoice tbl-colwidths="[14,24,18,18,26]"}
+
+Whatever the base choice, cap the largest weights. No single name should carry an industry.
+
+For a risk model used against a cap weighted benchmark, use $\sqrt{\text{mktcap}}$ with the cap constraint. Exposures and factor returns then line up with the benchmark, and the regression is not hostage to five stocks. For the cleanest estimate of the factor returns themselves, use GLS. Either way, state the choice next to the factor returns. Two models with different $W$ do not report comparable factor returns, even on the same data.
+
+The model in @sec-xsdata uses GLS with the equal constraint, the two step method above. @sec-mktfactor runs the cap based choices on the same data.
+
+### The market factor {#sec-mktfactor}
+
+Every stock has a market loading of 1. The market factor is the intercept of each day's regression, and its return is the return on whatever portfolio $W$ and $C$ make it.
+
+With a market column, industry dummies, and a diagonal $W$, that portfolio has a closed form. The fit for stock $i$ in industry $g$ is $f_{\text{mkt}} + f_g$. The best that sum can do is the $W$ weighted average return of the industry:
+
+$$
+\hat{f}_{\text{mkt},t} + \hat{f}_{g,t} = m_{g,t} = \frac{\sum_{i \in g} W_{ii}\, r_{i,t}}{\sum_{i \in g} W_{ii}}
+$$
+
+The constraint $\sum_k c_k f_k = 0$ then pins down the market factor as the $c$ weighted average of the industry averages.
+
+$$
+\hat{f}_{\text{mkt},t} = \sum_k \tilde{c}_k\, m_{k,t},
+\qquad \tilde{c}_k = \frac{c_k}{\sum_j c_j}
+$$
+
+So the market factor holds stock $i$ at
+
+$$
+\omega_i = \tilde{c}_{g(i)}\,\frac{W_{ii}}{\sum_{j \in g(i)} W_{jj}}
+$$
+
+The constraint sets the weight across industries. $W$ sets the weight within each one. Using the constraint names from @tbl-cchoice:
+
+- $W$ = mktcap with the cap constraint. Then $\omega_i = \text{mktcap}_i / \sum_j \text{mktcap}_j$, exactly the cap weighted index.
+- $W = I$ with the count constraint. Then $\omega_i = 1/n$, the equal weighted index.
+- $W = \sqrt{\text{mktcap}}$ with the cap constraint. Cap weighted across industries, $\sqrt{\text{mktcap}}$ weighted within them.
+- $W = D^{-1}$ with the equal constraint, our model. One eighth per industry whatever its size, with the quiet names favored inside each.
+
+Add style factors and the closed form goes away. The market factor becomes the mimicking portfolio with unit market exposure and zero exposure to every style. Vendors standardize style exposures to a cap weighted mean of zero. The cap weighted index then has no style exposure, and the market factor stays close to it.
+
+**What the choice does to $\hat{f}_{\text{mkt}}$** -- re-estimate our model under seven combinations of $W$ and constraint. Compare each market factor's return series to the cap weighted portfolio of our 100 stocks, and to SPY. The cap weighted 100 is the S&P 500 restricted to its 100 largest names. It is 74.6% of SPY by weight, has a 0.979 correlation with it, and runs 2.55% tracking error against it.
+
+| $W$ | Constraint | Ann. vol | Corr with cap 100 | Beta to cap 100 | TE vs cap 100 | TE vs SPY |
+|:--|:--|--:|--:|--:|--:|--:|
+| $I$ | Equal | 8.7% | 0.737 | 0.527 | 8.20% | 7.27% |
+| $I$ | Count | 10.2% | 0.878 | 0.737 | 5.82% | 4.49% |
+| $D^{-1}$ | Equal | 8.4% | 0.631 | 0.437 | 9.44% | 8.50% |
+| $D^{-1}$ | Count | 9.5% | 0.837 | 0.653 | 6.67% | 5.30% |
+| $D^{-1}$ | Cap | 12.2% | 0.873 | 0.877 | 6.12% | 4.75% |
+| $\sqrt{\text{mktcap}}$ | Cap | 13.0% | 0.960 | 1.028 | 3.64% | 3.26% |
+| mktcap | Cap | 12.1% | 1.000 | 1.000 | 0.00% | 2.55% |
+
+: The estimated market factor under different $W$ and constraint. Constraint names are from @tbl-cchoice. {#tbl-mktfactor tbl-colwidths="[13,14,10,15,15,16,17]"}
+
+The last row is the closed form at work. $W$ = mktcap with the cap constraint reproduces the cap weighted 100 to $10^{-17}$, and $W = I$ with the count constraint reproduces the equal weighted 100 to the same precision.
+
+Our market factor, $D^{-1}$ with the equal constraint, is the furthest from the index. It has a beta of 0.44 to the cap weighted 100 and runs 9.4% tracking error against it. In this window Tech is 44% of the index and drove most of its move. Our market factor gives Tech one eighth.
+
+The constraint does most of the work. Holding $W = D^{-1}$ and moving from the equal to the cap constraint cuts the tracking error from 9.4% to 6.1%. What remains comes from $W$. Inside each industry $D^{-1}$ still favors the quiet names over the mega caps.
+
+$\sqrt{\text{mktcap}}$ with the cap constraint gets within 3.6%. Inside Tech it holds AAPL at 5.1% against a cap weight of 10.7%, and NVDA and MSFT at 4.4% against 8.1% and 8.0%. Exactly the damping of the mega caps it was chosen for, and the price is that the market factor is not quite the index.
+
+The constraint changes the name, not the risk. $B$ is rank deficient, so every constraint produces the same fitted values $B\hat{f}_t$, the same residuals, and the same $\Sigma$. The script confirms that to $10^{-18}$. What moves is the split between the market factor and the industries, and so $F$ and every factor attribution. $W$ is different. It changes the fit itself, and $\Sigma$ changes with it. Moving from $D^{-1}$ to $\sqrt{\text{mktcap}}$ changes entries of $\Sigma$ by up to $3.7 \times 10^{-4}$, against a largest entry of $4.8 \times 10^{-3}$.
+
+**Beta to the cap weighted market** -- when the market factor is not the cap weighted index, a market loading of 1 is not a beta of 1 to the index. Get that beta from $\Sigma$. With cap weights $w_m$ and $x_m = B'w_m$, the market's factor exposures,
+
+$$
+\beta_i = \frac{(\Sigma w_m)_i}{w_m'\Sigma w_m}
+= \frac{b_i' F x_m + w_{m,i}\, d_i}{x_m' F x_m + \sum_j w_{m,j}^2\, d_j}
+$$
+
+$b_i$ is row $i$ of $B$. A portfolio's beta to the index is $\beta_p = w'\beta$, and the index itself has $\beta = 1$.
+
+Compare the beta to the market factor itself.
+
+$$
+\beta_i^{f} = \frac{(F b_i)_{\text{mkt}}}{F_{\text{mkt},\text{mkt}}}
+$$
+
+The two agree only when the market factor is the cap weighted index.
+
+In a market plus industry model $b_i' F x_m = (F x_m)_{\text{mkt}} + (F x_m)_{g(i)}$. Every stock in an industry gets the same value, and the same $\beta_i^f$. Betas to the index inside an industry differ only through $w_{m,i} d_i$. That term matters for a name with a large weight or a large specific variance.
+
+| Industry | Beta to market factor | Model beta to cap 100 | Historical beta to cap 100 |
+|:--|--:|:--|:--|
+| Tech | 0.58 | 1.39 to 2.43 | -0.14 to 3.68 |
+| Discretionary | 1.65 | 0.38 to 0.91 | 0.03 to 2.56 |
+| Industrials | 0.98 | 0.59 to 0.63 | -0.30 to 1.77 |
+| Financials | 1.29 | 0.41 to 0.44 | -0.63 to 1.86 |
+| Comm. Services | 1.42 | 0.14 to 0.45 | -0.01 to 1.43 |
+| Health | 1.06 | -0.03 to 0.02 | -0.47 to 1.25 |
+| Staples | 0.99 | -0.18 to -0.14 | -1.02 to 0.22 |
+| Other | 0.02 | -0.19 to -0.17 | -0.91 to 1.46 |
+
+: Betas from our model ($D^{-1}$, equal constraint), range within each industry. $w_m$ is the float adjusted cap weight. {#tbl-xsbeta tbl-colwidths="[18,22,30,30]"}
+
+The two model betas disagree, and the disagreement is the point. Staples has a beta of 0.99 to our market factor and a beta of -0.16 to the cap weighted index. Tech is the reverse, at 0.58 to the market factor and 1.39 or more to the index. Our market factor is an equal blend of eight industries. The index is 44% Tech. A portfolio manager hedging against the index needs the second column, not the first.
+
+Inside an industry the model betas barely move, with one exception. AAPL is 10.7% of the index, so its own specific variance is a large part of the index's variance, and the $w_{m,i} d_i$ term lifts its model beta to 2.43. Its historical beta is 0.21. AAPL spent this window moving against the rest of Tech, and our model cannot represent that. AAPL loads +1 on the Tech factor, the misfit lands in its residual, and its specific volatility comes out at 45%, above its total volatility of 28%. The own weight term is only as good as $d_i$. For a mega cap it is large enough to matter.
+
+The historical betas inside each industry spread over a range of one and a half to four. Vendors close that gap with a Beta style factor. The descriptor is a historical beta, standardized like any other. A time series estimate comes back into the model, but as an observed exposure, not as the market loading.
+
+The code for this section and the last is at the end of `week09_04_cross_sectional.jl`.
 
 ### Fama MacBeth inference
 
@@ -333,24 +500,25 @@ Residuals within a single date are heavily correlated, since everything moves wi
 
 The limitation is that it assumes no serial correlation in $\hat{f}_t$. If there is any, use Newey West standard errors.
 
-### A cross-sectional model on our data
+### A cross-sectional model on our data {#sec-xsdata}
 
-Market factor plus 8 industry groups, weighted by inverse specific variance, sum to zero constrained.
+Market factor plus 8 industry groups, weighted by inverse specific variance, sum to zero constrained. The code is in `week09_04_cross_sectional.jl`. It follows the two steps above. A first pass by OLS gives residuals, the residuals give a specific variance for each stock, and a second pass uses $W = D^{-1}$. The weighting matters here. Specific volatility from the OLS pass runs from 11.5% for PEP to 104.5% for SNDK, so GLS gives PEP 82 times the weight of SNDK. The market factor from the two passes has a 0.971 correlation.
 
 | Factor | Mean return (bp/day) | Ann. vol | FM $t$-stat |
 |:--|--:|--:|--:|
-| Market | +7.9 | 11.9% | +0.82 |
-| Staples | +8.7 | 10.9% | +0.98 |
-| Health | +2.0 | 9.8% | +0.26 |
-| Tech | -0.5 | 14.7% | -0.04 |
-| Financials | -0.8 | 12.3% | -0.08 |
-| Discretionary | -1.9 | 9.4% | -0.25 |
-| Industrials | -1.9 | 9.6% | -0.24 |
-| Comm. Services | -12.0 | 8.4% | -1.78 |
+| Market | -1.8 | 8.4% | -0.26 |
+| Tech | +14.4 | 27.2% | +0.65 |
+| Health | +13.4 | 14.7% | +1.13 |
+| Comm. Services | +10.4 | 16.6% | +0.77 |
+| Other | +3.5 | 13.8% | +0.32 |
+| Financials | -5.6 | 9.8% | -0.71 |
+| Staples | -5.7 | 14.2% | -0.50 |
+| Industrials | -7.9 | 16.0% | -0.61 |
+| Discretionary | -22.5 | 12.0% | -2.31 |
 
 : Cross-sectional factor returns, 60 days {#tbl-xsfactors}
 
-Not one $t$-statistic clears 2.0. That is the correct result. Sixty days is far too short to say anything about factor premia. The volatilities are estimated much more precisely than the means. Use this model for risk. Do not use these means as expected returns.
+One $t$-statistic clears 2.0, Discretionary at -2.31. That is not evidence of anything. Test nine factors at 5% and chance alone produces 0.45 false positives on average. Sixty days is far too short to say anything about factor premia. The volatilities are estimated much more precisely than the means. Use this model for risk. Do not use these means as expected returns.
 
 ## Statistical Models
 
@@ -386,7 +554,9 @@ Loadings $BQ$ with factors $Q'f$ fit the data equally well and give an identical
 
 This is where students most often go wrong. PC1 is not the market factor. PC1 is the direction of maximum variance, which for equity returns is usually close to a market-like direction, but the model has no opinion about that.
 
-On our data the correlation between the PC1 loadings and the FF3 market betas is $-0.95$. Eigenvector signs are arbitrary, so read that as $+0.95$. 93% of the PC1 loadings share a sign. So PC1 is market-like here, but that is something we verified after the fact, not something the method delivered.
+The code for this whole section is in `week09_03_pca_statistical.jl`. Our window shows how wrong the assumption can be. Only 61% of the PC1 loadings share a sign, and the PC1 portfolio return has a correlation of 0.53 with SPY. Eigenvector signs are arbitrary, so the script prints these as negative numbers. PC1 is long semiconductors and storage (SNDK, MU, MRVL, LRCX, INTC) and short software, services, and defensives (ACN, CRM, MO, ADP, BKNG). That spread was the largest source of variance in these 60 days.
+
+The PC1 loadings still have a correlation of 0.71 with the FF3 market betas. In this window 8 of the 12 highest market betas belong to semiconductor names. PC2 is closer to a market factor, with 83% of loadings sharing a sign and a 0.69 correlation with SPY. Neither is the market. PCA ranks components by variance, and it never promised that the largest one has a name.
 
 The practical consequence: statistical models are good for risk, which depends only on $BB' + D$ and is rotation invariant. They are awkward for attribution, which requires naming the factors.
 
@@ -406,11 +576,11 @@ $V(m)$ is the mean squared residual. Minimize over $m$. This is preferable to ey
 
 | Components | 1 | 2 | 3 | 5 | 10 | 20 | 59 |
 |:--|--:|--:|--:|--:|--:|--:|--:|
-| Cumulative variance | 28.7% | 42.4% | 48.8% | 58.2% | 72.3% | 86.8% | 100.0% |
+| Cumulative variance | 35.7% | 46.1% | 53.0% | 61.1% | 74.5% | 88.1% | 100.0% |
 
 : Variance explained by principal components {#tbl-scree}
 
-The first component explains 28.7% and the second adds 13.7%. After that the drop-off is gradual and there is no clean elbow, which is typical for equity returns. The elbow argument supports $m = 2$ or 3. A 90% of variance rule would demand more than 20 factors, which is overfitting 60 observations.
+The first component explains 35.7%, the second adds 10.4%, and the third 6.9%. After that the drop-off is gradual, which is typical for equity returns. The elbow argument supports $m = 3$. A 90% of variance rule would demand more than 20 factors, which is overfitting 60 observations.
 
 The eigenvalues also run out at 59. Everything past that is exactly zero. That is the rank problem again.
 
@@ -428,11 +598,11 @@ Cost is $O(T^3)$ instead of $O(n^3)$, and it is better conditioned. For $n=100, 
 
 ### PCA on correlation vs covariance
 
-These give different answers. PCA on the covariance matrix is dominated by the highest variance assets. With TSLA at 74% annualized volatility and JNJ at 15%, TSLA gets roughly 24 times the influence of JNJ in the first component. PCA on the correlation matrix treats every asset equally.
+These give different answers. PCA on the covariance matrix is dominated by the highest variance assets. With TSLA at 50% annualized volatility and JNJ at 21%, TSLA gets roughly 6 times the influence of JNJ in the first component. PCA on the correlation matrix treats every asset equally.
 
 My opinion: for a risk model use covariance, because you care about dollars of risk and the high volatility names genuinely matter more. For exploratory structure finding use correlation, so a few volatile names do not dictate the answer.
 
-# The Factor Covariance Matrix
+# The Factor Covariance Matrix {#sec-factorcov}
 
 Everything follows from
 
@@ -469,7 +639,7 @@ Compare that to Week 03. There we estimated a covariance matrix, found it was no
 
 The factor structure is a parameterization of the PSD cone. Every matrix of the form $BFB'+D$ with $F \succeq 0, D \succeq 0$ is PSD, and no adjustment to $B$ can leave the cone.
 
-The one thing to check is $d_i \geq 0$. In a statistical model $d_i = \Sigma_{ii} - \sum_k B_{ik}^2$ can go negative if the components over-explain an asset. That is a Heywood case. Floor it at a small positive number. On our data the minimum $d_i$ from the 3 component model is $3.09\times10^{-5}$, so no flooring was needed.
+The one thing to check is $d_i \geq 0$. In a statistical model $d_i = \Sigma_{ii} - \sum_k B_{ik}^2$ can go negative if the components over-explain an asset. That is a Heywood case. Floor it at a small positive number. On our data the minimum $d_i$ from the 3 component model is $6.12\times10^{-5}$, so no flooring was needed.
 
 ## Rank and Invertibility
 
@@ -479,19 +649,21 @@ Adding $D$ with a strictly positive diagonal fixes it. From the proof above $x'\
 
 The idiosyncratic term is what makes the matrix invertible. Students think of $D$ as leftover junk. It is doing the structural work.
 
-It also rules out the null space problem from Section 1.3. There a portfolio existed with $w'\widehat{\Sigma}w = 0$ exactly. Under a factor model the best a portfolio can do is neutralize all $m$ factor exposures, which leaves $w'\Sigma w = \sum_i w_i^2 d_i > 0$. The model never calls a portfolio riskless because it never claims certainty about a single stock.
+It also rules out the null space problem from @sec-nullspace. There a portfolio existed with $w'\widehat{\Sigma}w = 0$ exactly. Under a factor model the best a portfolio can do is neutralize all $m$ factor exposures, which leaves $w'\Sigma w = \sum_i w_i^2 d_i > 0$. The model never calls a portfolio riskless because it never claims certainty about a single stock.
 
 | | Sample | FF3 factor model | PCA-3 model |
 |:--|--:|--:|--:|
 | Rank | 59 | 100 | 100 |
-| $\lambda_{\min}$ | $\sim -10^{-18}$ | $2.91\times10^{-5}$ | $3.19\times10^{-5}$ |
-| Condition number | undefined | 343 | 323 |
+| $\lambda_{\min}$ | $\sim -10^{-18}$ | $6.92\times10^{-5}$ | $6.14\times10^{-5}$ |
+| Condition number | undefined | 178 | 373 |
 | Non-zero columns in $L$ | 59 of 100 | 100 | 100 |
 | Parameters | 5,050 | 406 | 406 |
 
 : The three covariance estimates compared {#tbl-compare}
 
-A condition number of 343 is a well behaved matrix. For the sample estimate the condition number is not a large number, it is undefined. $\lambda_{\min}$ is zero, and whatever your software prints is a report on rounding. Values above $10^{13}$ are typical and the figure changes with the LAPACK path.
+`week09_03_pca_statistical.jl` ends by printing this comparison.
+
+Condition numbers of 178 and 373 describe well behaved matrices. For the sample estimate the condition number is not a large number, it is undefined. $\lambda_{\min}$ is zero, and whatever your software prints is a report on rounding. Values above $10^{13}$ are typical and the figure changes with the LAPACK path.
 
 ## Fast Inversion, the Woodbury Identity
 
@@ -509,15 +681,17 @@ Total cost is $O(nm^2)$ instead of $O(n^3)$. With $m = 3$ that is effectively li
 
 | $n$ | 100 | 500 | 1,000 | 2,000 | 5,000 |
 |:--|--:|--:|--:|--:|--:|
-| Direct (ms) | 0.17 | 5.99 | 30.2 | 148 | 2,375 |
-| Woodbury (ms) | 0.030 | 0.049 | 0.074 | 0.105 | 0.136 |
-| Speedup | 6x | 122x | 406x | 1,410x | 17,428x |
+| Direct (ms) | 0.037 | 6.11 | 11.9 | 43.2 | 410 |
+| Woodbury (ms) | 0.002 | 0.006 | 0.011 | 0.036 | 0.080 |
+| Speedup | 22x | 1,019x | 1,111x | 1,191x | 5,130x |
 
 : Cost of solving with and without the factor structure {#tbl-woodbury}
 
-Maximum relative difference between the two answers is $4.1\times10^{-15}$. It is the same answer.
+Maximum relative difference between the two answers is $7.4\times10^{-16}$. It is the same answer.
 
-The Woodbury row is nearly flat. It is not just faster, it barely grows. Commercial optimizers store the covariance in factor form for this reason, and they never form $\Sigma$ explicitly at all. An $8{,}000\times8{,}000$ dense matrix is 512MB. The factor form is under 2MB.
+The code is in `week09_05_woodbury.jl`. Timings depend on the machine and the BLAS library, so your numbers will differ from the table, but the shape should not.
+
+Going from $n = 100$ to $n = 5{,}000$ multiplies the direct cost by about 11,000. Theory says $50^3 = 125{,}000$, and the gap is fixed overhead, which dominates at $n = 100$. The Woodbury cost grows only about in proportion to $n$ and stays well under a tenth of a millisecond. It is not just faster, it barely grows. Commercial optimizers store the covariance in factor form for this reason, and they never form $\Sigma$ explicitly at all. An $8{,}000\times8{,}000$ dense matrix is 512MB. The factor form is about 0.3MB.
 
 ## Factor Structure vs Shrinkage
 
@@ -585,28 +759,30 @@ $$
 
 Idiosyncratic variance falls at rate $1/n$. The systematic term $x'Fx$ does not fall at all. That is the precise statement of "diversification eliminates specific risk but not market risk."
 
+The numbers in this section and in @sec-exante come from `week09_06_ex_ante_risk.jl`.
+
 ![Systematic and idiosyncratic shares of variance for single assets and for the portfolio](figures/vardecomp.png){#fig-vardecomp width=100%}
 
 | | Typical single stock | AAPL alone | Equal-weighted 100-stock portfolio |
 |:--|--:|--:|--:|
-| Systematic share of variance | 37.7% | 45.9% | 96.9% |
-| Idiosyncratic share | 62.3% | 54.1% | 3.1% |
+| Systematic share of variance | 20.5% | 6.9% | 87.3% |
+| Idiosyncratic share | 79.5% | 93.1% | 12.7% |
 
 : Idiosyncratic risk at the asset level and the portfolio level {#tbl-vardecomp}
 
-For a single stock most of the variance is idiosyncratic and the factors explain less than half. For a portfolio of the same 100 stocks the idiosyncratic share is 3% and effectively gone.
+For a single stock most of the variance is idiosyncratic, and the factors explain about a fifth of it. For a portfolio of the same 100 stocks the idiosyncratic share falls to 13%. It is not gone, because each stock's specific variance is so large relative to its factor variance in this window, but it has fallen from four fifths of the variance to an eighth.
 
 This is why a 3 factor model can be a poor description of one stock and a good description of a diversified portfolio. It is also why the diagonal $D$ assumption is more forgivable than it looks. Errors in $D$ get multiplied by $w_i^2$.
 
 In volatility terms:
 
 $$
-13.40\% = \sqrt{(13.19\%)^2 + (2.34\%)^2}
+10.10\% = \sqrt{(9.43\%)^2 + (3.60\%)^2}
 $$
 
-Risk adds in quadrature, so a component five times smaller contributes almost nothing.
+Risk adds in quadrature. The idiosyncratic piece is more than a third the size of the systematic piece, and it adds only 0.67 points to the total.
 
-# Ex-Ante Risk
+# Ex-Ante Risk {#sec-exante}
 
 ## Working in Exposure Space
 
@@ -614,8 +790,8 @@ $x = B'w$ reduces a 100 dimensional portfolio to a 3 dimensional risk descriptio
 
 | | Mkt-RF | SMB | HML |
 |:--|--:|--:|--:|
-| Exposure $x = B'w$ | 0.930 | -0.125 | +0.157 |
-| Share of portfolio variance | 102.3% | -3.6% | -1.8% |
+| Exposure $x = B'w$ | 0.852 | +0.089 | +0.099 |
+| Share of portfolio variance | 90.5% | 1.0% | -4.3% |
 
 : Equal-weight portfolio exposures {#tbl-exposures}
 
@@ -627,7 +803,7 @@ $$
 \frac{\partial \sigma_p^2}{\partial x_k} = 2(Fx)_k
 $$
 
-so the share for factor $k$ is $x_k (Fx)_k / \sigma_p^2$. SMB and HML are negatively correlated with the market here, $-0.33$ and $-0.38$. A small negative SMB tilt reduces total risk. Contributions can be negative. That is the point of hedging, and it is the Week 08 decomposition applied in factor space.
+so the share for factor $k$ is $x_k (Fx)_k / \sigma_p^2$. With a market exposure near 1, the sign of each share is driven by the factor's correlation with the market. HML moved against the market over this window, $-0.51$, and the portfolio is long HML, so the tilt offsets some market risk. SMB barely moved with the market, $+0.10$, and its share is about 1%. The idiosyncratic term takes the remaining 12.7%. Contributions can be negative. That is the point of hedging, and it is the Week 08 decomposition applied in factor space.
 
 ## Factor Risk Attribution
 
@@ -663,12 +839,12 @@ What this buys:
 - Fat tails go where they belong. Fitting a $t$ to each of 100 stocks conflates market tail risk with single name event risk. Here you can give the market factor a $t_5$ and leave the idiosyncratic terms normal, which is closer to what happens.
 - Factor VaR is free. Rerun with one factor shocked and the rest at zero.
 
-Under normality the equal weight portfolio has a daily volatility of 0.839%.
+Under normality the equal weight portfolio has a daily volatility of 0.632%.
 
 $$
-\text{VaR}_{5\%} = 1.645 \times 0.839\% = 1.380\%
+\text{VaR}_{5\%} = 1.645 \times 0.632\% = 1.040\%
 \qquad
-\text{ES}_{5\%} = \frac{\phi(z_{0.05})}{0.05}\times 0.839\% = 1.731\%
+\text{ES}_{5\%} = \frac{\phi(z_{0.05})}{0.05}\times 0.632\% = 1.304\%
 $$
 
 Simulating with a $t_5$ market factor pushes both out, ES in particular. That is Problem 2.
@@ -683,17 +859,17 @@ $$
 
 The active exposures $B'a$ are what the manager is betting on relative to the benchmark. The decomposition separates two very different activities.
 
-Take the equal weighted portfolio as active against a benchmark of the 20 largest names.
+Take the equal weighted portfolio as active against the cap weighted portfolio of the same 100 stocks. The benchmark weights are the float adjusted caps in `data/constituents.csv`. Equal weighting underweights AAPL, NVDA, and MSFT by 7 to 10 points each and spreads that weight over the other 97 names.
 
 | Total TE (ann.) | from factor bets | from stock selection | Active Mkt-RF | Active SMB | Active HML |
 |--:|--:|--:|--:|--:|--:|
-| 5.69% | 2.67% | 5.03% | $-0.036$ | $+0.094$ | $+0.138$ |
+| 6.29% | 3.34% | 5.33% | $-0.150$ | $+0.261$ | $+0.174$ |
 
-: Tracking error decomposition {#tbl-te}
+: Tracking error decomposition, equal weight against cap weight {#tbl-te}
 
-The manager is close to market neutral in active terms, has a modest small and value tilt, and gets most of the tracking error from stock selection rather than factor bets. Whether that is good depends on whether they are a stock picker or a factor allocator. If they claimed to be a factor allocator, this table says otherwise.
+The active exposures are what equal weighting against cap weighting always looks like. The portfolio is tilted toward smaller and cheaper names, and here it is also slightly under the market. Stock selection is still 72% of the tracking error variance. Whether that is good depends on whether the manager is a stock picker or a factor allocator. If they claimed to be a factor allocator, this table says otherwise.
 
-The two pieces add in quadrature, $\sqrt{2.67^2 + 5.03^2} = 5.69$.
+The two pieces add in quadrature, $\sqrt{3.34^2 + 5.33^2} = 6.29$.
 
 # Portfolio Construction
 
@@ -709,28 +885,28 @@ $$
 
 Every mean variance problem needs $\Sigma^{-1}$ times something. With a sample covariance and $n > T$ that object does not exist. With the factor covariance it always does, and Woodbury makes it cheap.
 
-Running minimum variance four ways on the same 100 stocks:
+Running minimum variance four ways on the same 100 stocks. The code for this section and the next is in `week09_07_portfolio_construction.jl`. "Realized" is the standard deviation of the portfolio's actual daily returns over the same 60 days the models were estimated on.
 
-| Covariance | Max weight | Gross | Predicted ann. vol | Realized ann. vol |
-|:--|--:|--:|--:|--:|
-| Sample (rank 59)$^\dagger$ | 350% | --- | ~0% | --- |
-| FF3 time-series | 6.6% | 1.76 | 4.26% | 8.68% |
-| PCA-3 statistical | 9.2% | 1.98 | 4.57% | 7.14% |
-| Cross-sectional (mkt + industry) | 8.6% | 1.23 | 9.97% | 9.89% |
+| Covariance | Max weight | Largest short | Gross | Predicted ann. vol | Realized ann. vol |
+|:--|--:|--:|--:|--:|--:|
+| Sample (rank 59)$^\dagger$ | 6.2% | -5.1% | 2.23 | 4.14% | 4.14% |
+| FF3 time-series | 6.3% | -3.2% | 1.24 | 4.04% | 6.12% |
+| PCA-3 statistical | 5.2% | -0.8% | 1.18 | 3.22% | 5.99% |
+| Cross-sectional (mkt + industry) | 7.6% | -0.8% | 1.05 | 7.09% | 6.33% |
 
 : Minimum-variance portfolios from four covariance estimates {#tbl-mvp}
 
-$^\dagger$ Not solvable, $\Sigma^{-1}$ does not exist. The figures shown use a pseudo-inverse.
+$^\dagger$ Not solvable, $\Sigma^{-1}$ does not exist. The figures shown use a pseudo-inverse with the default tolerance (@sec-nullspace).
 
 Three things here.
 
-First, every factor model produces a sane portfolio. Maximum weights under 10%, gross exposure under 2x, no position dominating. The sample covariance solution puts 350% into one name. That is Michaud's error maximization from Week 08.
+First, every factor model produces a sane portfolio. Maximum weights under 10%, gross exposure under 1.3x, no position dominating. The sample covariance solution carries a 5.1% short and nearly twice the gross exposure of any factor model. Its realized volatility matches its forecast exactly, but only because the realized figure is measured on the same 60 days the matrix was estimated from. An in-sample check can never catch the sample covariance out. The 30/30 split in @sec-nullspace is the honest test, and there the "riskless" direction ran at 6.8%. That is Michaud's error maximization from Week 08.
 
-Second, FF3 and PCA-3 badly underestimated realized risk, by roughly 2x for FF3. That is the diagonal $D$ assumption failing. The optimizer looked at $D$, decided the residuals were independent, and diversified aggressively against them. They were not independent.
+Second, FF3 and PCA-3 badly underestimated realized risk, by 1.5x for FF3 and nearly 2x for PCA-3. That is the diagonal $D$ assumption failing. The optimizer looked at $D$, decided the residuals were independent, and diversified aggressively against them. They were not independent.
 
-Third, the cross-sectional model with industry factors predicted 9.97% against a realized 9.89%. It also needed the least gross exposure to get there.
+Third, the cross-sectional model with industry factors predicted 7.09% against a realized 6.33%. It was the only model that did not understate risk, and it needed the least gross exposure. It did not deliver the lowest realized risk. PCA-3's portfolio realized 5.99%. The realized risks of the three factor portfolios are within 0.35 points of each other. The forecasts are not.
 
-Section 9.3 explains why. Stocks in the same industry move together beyond what market, size, and value explain. FF3 pushes that into the residuals and then assumes it away. The cross-sectional model gives it somewhere to live. A model that is honest about correlation produces a higher risk forecast, and the higher forecast is the right one.
+@sec-residcorr explains why. Stocks in the same industry move together beyond what market, size, and value explain. FF3 pushes that into the residuals and then assumes it away. The cross-sectional model gives it somewhere to live. A model that is honest about correlation produces a higher risk forecast, and the higher forecast is the right one.
 
 A factor model's value is not measured by $R^2$ or by average residual correlation. It is measured by whether the risk it forecasts is the risk you get.
 
@@ -757,13 +933,13 @@ Common variants:
 
 | | Unconstrained MVP | Fully factor-neutral |
 |:--|--:|--:|
-| Annualized volatility | 4.26% | 4.63% |
-| $B'w$ | $(0.106, -0.109, 0.018)$ | $(0,0,0)$ to machine precision |
-| Gross exposure $\sum|w_i|$ | 1.76 | 2.03 |
+| Annualized volatility | 4.04% | 4.47% |
+| $B'w$ | $(0.140, 0.043, 0.162)$ | $(0,0,0)$ to machine precision |
+| Gross exposure $\sum|w_i|$ | 1.24 | 1.48 |
 
 : Cost of imposing factor neutrality {#tbl-neutral}
 
-Neutrality costs 37bp of volatility and requires more gross exposure. Quote that price to whoever demanded the neutrality.
+Neutrality costs 43bp of volatility and requires more gross exposure. Quote that price to whoever demanded the neutrality.
 
 ## Risk Budgeting in Factor Space
 
@@ -784,7 +960,7 @@ $$
 
 $m$ is also small, so this optimization has 3 residuals instead of 100. It converges far more reliably than the asset space version.
 
-# What Goes Wrong
+# What Goes Wrong {#sec-wrong}
 
 ## The Factor Zoo
 
@@ -800,43 +976,45 @@ Harvey, Liu, and Zhu (2016) make the multiple testing argument. If hundreds of r
 
 Betas move. Some of that is real change in the business. Most of it is estimation noise, and the two are hard to separate.
 
-On our data the standard error on a market beta is about $\pm 0.2$. A beta estimated at 1.15 and one estimated at 0.85 are barely more than one standard error apart. Ranking stocks on that difference is ranking on noise.
+On our data the median standard error on a market beta is 0.36. A beta estimated at 1.15 and one estimated at 0.85 are less than one standard error apart. Ranking stocks on that difference is ranking on noise.
 
 - Blume shrinkage, $\beta^{adj} = \frac{2}{3}\hat\beta + \frac{1}{3}$, shrinking toward 1. Crude but widely used.
 - Vasicek shrinkage, shrinking each beta toward the cross-sectional mean in proportion to its own estimation variance. Noisy betas get shrunk harder. Better than Blume and barely more work.
 - Longer windows, or exponential weighting instead of short rolling windows.
 - A cross-sectional model, where exposures come from observable characteristics and are not estimated at all. This is a real advantage of the fundamental approach and is why the vendors favor it.
 
-## Residual Correlation, Testing the Diagonal $D$ Assumption
+## Residual Correlation, Testing the Diagonal $D$ Assumption {#sec-residcorr}
 
-The diagonal $D$ does the most work and gets the least scrutiny. It is directly testable. Compute the residual correlation matrix and look at the off-diagonals.
+The diagonal $D$ does the most work and gets the least scrutiny. It is directly testable. Compute the residual correlation matrix and look at the off-diagonals. The code is in `week09_08_residual_correlation.jl`.
 
 | Pair | FF3 residual corr | After adding industry factors |
 |:--|--:|--:|
-| GOOGL / GOOG | +0.986 | +0.988 |
-| MS / GS | +0.860 | +0.784 |
-| HD / LOW | +0.849 | +0.747 |
-| AMAT / LRCX | +0.809 | +0.744 |
-| V / MA | +0.802 | +0.814 |
-| TMO / DHR | +0.752 | --- |
-| TXN / ADI | +0.746 | --- |
-| PG / PEP | +0.742 | +0.258 |
+| GOOGL / GOOG | +0.995 | +0.993 |
+| PANW / CRWD | +0.891 | +0.900 |
+| AMAT / LRCX | +0.883 | +0.819 |
+| V / MA | +0.873 | +0.819 |
+| TXN / ADI | +0.867 | +0.669 |
+| AMAT / KLAC | +0.866 | +0.730 |
+| MU / SNDK | +0.860 | +0.829 |
+| VZ / T | +0.844 | +0.776 |
+| HD / LOW | +0.839 | +0.572 |
+| LRCX / KLAC | +0.825 | +0.664 |
 
 : Largest FF3 residual correlations {#tbl-resid}
 
-That list is not random. GOOGL and GOOG are two share classes of the same company. No factor model fixes that, because they are the same asset. Drop one or treat them as one line item. Every other pair is an industry pair -- investment banks, home improvement retail, semiconductor equipment, payment networks, life science tools, analog semis.
+That list is not random. GOOGL and GOOG are two share classes of the same company. No factor model fixes that, because they are the same asset. Drop one or treat them as one line item. Every other pair is an industry pair -- cybersecurity software, semiconductor equipment (three of the ten pairs), payment networks, analog semis, memory and storage, telecom carriers, home improvement retail.
 
 FF3 has no industry factors, so industry co-movement goes into the residuals where the model insists it does not exist. That is a missing factor, and it is why the minimum variance portfolio in @tbl-mvp underestimated realized risk.
 
-Adding industry factors helps but does not fully fix it. PG/PEP drops from 0.74 to 0.26, since both are staples and a staples factor absorbs it. MS/GS only falls from 0.86 to 0.78, because a broad Financials bucket does not capture "bulge bracket investment bank." Finer sub-industry granularity would do better. GOOGL/GOOG does not move.
+Adding industry factors helps but does not fix it. HD/LOW falls from 0.84 to 0.57 and TXN/ADI from 0.87 to 0.67. Those are the pairs a broad bucket captures best. PANW/CRWD does not move at all, and MU/SNDK barely moves. Our Tech bucket holds 28 names, and it lumps cybersecurity software and memory in with semiconductor equipment, hardware, and IT services. V/MA falls only to 0.82, because a broad Financials bucket does not capture "payment network." VZ/T falls only to 0.78 for the same reason in Communication Services. Finer sub-industry granularity would do better. GOOGL/GOOG does not move.
 
-One caveat on reading the table. Mean absolute residual correlation is 0.140 for FF3 and 0.157 for the cross-sectional model. Adding six factors made the average slightly worse. Do not over-interpret that. With $T=60$ and 4 regressors the sampling standard deviation of a correlation is about $1/\sqrt{56} = 0.134$, so the expected absolute correlation under a true null of zero is around 0.107. Both models sit near the noise floor, and the cross-sectional model has fewer residual degrees of freedom, which raises its floor.
+One caveat on reading the table. With $T=60$ and 4 regressors the sampling standard deviation of a correlation is about $1/\sqrt{56} = 0.134$, so the expected absolute correlation under a true null of zero is around 0.107. That is the noise floor. Mean absolute residual correlation is 0.199 for FF3 and 0.165 for the cross-sectional model. Both sit above the floor, and the industry factors take out about a third of the excess.
 
 Two lessons.
 
-The average is uninformative and the tail carries the signal. A residual correlation of 0.15 is noise. A residual correlation of 0.86 between two investment banks is a missing factor. Sort the list, look at the top, ask whether the pairs make economic sense.
+The average says there is a problem, not where it is. The tail carries the signal. A residual correlation of 0.15 is noise. A residual correlation of 0.89 between two cybersecurity companies is a missing factor. Sort the list, look at the top, ask whether the pairs make economic sense.
 
-Judge the model by its risk forecast, not its residual diagnostics. On average residual correlation the cross-sectional model looked worse than FF3. On @tbl-mvp, forecast versus realized, it was the only one of the three that got the answer right. Diagnostics tell you what to fix. Out of sample forecast accuracy tells you which model to use.
+Judge the model by its risk forecast, not its residual diagnostics. The cross-sectional model still leaves PANW/CRWD at 0.90 and MU/SNDK at 0.83. On @tbl-mvp, forecast versus realized, it was still the only one of the three that did not understate risk. Diagnostics tell you what to fix. Out of sample forecast accuracy tells you which model to use.
 
 ## Collinear Exposures
 
@@ -856,12 +1034,12 @@ Three ways to build a factor model that backtests beautifully and fails in produ
 
 ## Short Estimation Windows
 
-Everything here used $T = 60$. That was deliberate -- it reuses data you already have and it makes the rank problem vivid -- but do not build a production risk model this way.
+Everything here used $T = 60$. That was deliberate -- it makes the rank problem vivid -- but do not build a production risk model this way.
 
 At $T = 60$:
 
 - Factor volatilities carry a standard error of roughly $1/\sqrt{2T} \approx 9\%$ of their value. Tolerable.
-- Factor means carry a standard error of $\sigma/\sqrt{T}$. For a factor at 15% annualized volatility that is 1.9% annualized on a premium that might be 5%. Useless, and it is why no $t$-statistic in @tbl-xsfactors cleared 2.0.
+- Factor means carry a standard error of $\sigma/\sqrt{T}$. For a factor at 15% annualized volatility, 60 daily observations give a standard error on the annualized mean of $15\% \times \sqrt{255/60} \approx 31\%$, on a premium that might be 5%. Useless, and it is why the one $t$-statistic in @tbl-xsfactors that cleared 2.0 means nothing.
 
 Volatility is estimable from short samples. Expected return is not. Merton (1980) made the point formally. You can improve a variance estimate by sampling more finely. You cannot improve a mean estimate that way, only by extending the calendar span.
 
@@ -869,20 +1047,20 @@ This is the statistical justification for everything in Week 08 about risk budge
 
 # Worked Example and Problems
 
-`week09.jl` runs the full analysis reported here.
+The worked example is split into eight standalone scripts, one for each step below. Each script can be run on its own, for example `julia --project=Week09 Week09/week09_02_ff3_time_series.jl`, and is commented line by line against these notes. `week09_common.jl` holds the shared data loading and the three model fits as functions, so later scripts can rebuild a model in one line. It also loads the course library, and the scripts use `chol_psd!` from `simulate.jl` and `VaR` and `ES` from `RiskStats.jl` rather than rewriting them. `week09.jl` runs all eight in order.
 
-1. Load `DailyReturn.csv`. Show $\operatorname{rank}(\widehat{\Sigma}) = 59$, that the PSD Cholesky succeeds with 41 zero columns, and that a null space portfolio forecast at zero risk realizes 10.5% out of sample.
-2. Fit FF3 by stacked OLS. Build $\Sigma = BFB' + D$, confirm rank 100 and PD.
-3. Fit a 3 component statistical model by PCA. Produce the scree plot, compare.
-4. Fit the cross-sectional industry model with the sum to zero constraint. Compute Fama MacBeth $t$-statistics.
-5. Verify the Woodbury identity and time it.
-6. Compute exposures, the variance decomposition, and tracking error.
-7. Solve the minimum variance and factor neutral problems.
-8. Run the residual correlation diagnostic.
+1. `week09_01_singular_covariance.jl`. Load the 100 stocks from `Week09/data`. Show $\operatorname{rank}(\widehat{\Sigma}) = 59$, that the PSD Cholesky succeeds with 41 zero columns, and that a null space portfolio forecast at zero risk realizes 6.8% out of sample.
+2. `week09_02_ff3_time_series.jl`. Fit FF3 by stacked OLS. Build $\Sigma = BFB' + D$, confirm rank 100 and PD.
+3. `week09_03_pca_statistical.jl`. Fit a 3 component statistical model by PCA. Produce the scree plot, compare.
+4. `week09_04_cross_sectional.jl`. Fit the cross-sectional industry model with the sum to zero constraint, OLS then GLS. Compute Fama MacBeth $t$-statistics. Show what $W$ and the constraint do to the market factor, and compute each stock's beta to the cap weighted portfolio.
+5. `week09_05_woodbury.jl`. Verify the Woodbury identity and time it.
+6. `week09_06_ex_ante_risk.jl`. Compute exposures, the variance decomposition, and tracking error against the cap weighted benchmark.
+7. `week09_07_portfolio_construction.jl`. Solve the minimum variance and factor neutral problems.
+8. `week09_08_residual_correlation.jl`. Run the residual correlation diagnostic.
 
 ## Problem 1
 
-Using `DailyReturn.csv`, all 100 stocks excluding SPY.
+Using the 60 days of returns from the worked example, all 100 stocks excluding SPY. `load_returns()` in `week09_common.jl` loads them.
 
 a. Confirm the sample covariance is singular and report its rank. Run the Week 03 PSD Cholesky on it and report the number of zero columns in the root. Explain in one sentence why the factorization succeeding is not reassuring.
 

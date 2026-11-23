@@ -5,7 +5,7 @@ Regenerate the two data-driven figures for the Week 09 notes.
     python3 make_figures.py
 
 Produces scree.png and vardecomp.png in this directory, using the same
-FF3 fit that week09.jl performs.  The TikZ figures (taxonomy, sigma,
+FF3 fit that week09_02_ff3_time_series.jl performs.  The TikZ figures (taxonomy, sigma,
 simflow) are built from their .tex sources by `make figures` at the
 repository root.
 """
@@ -17,20 +17,22 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DATA = os.path.join(HERE, "..", "..", "Week08")
+DATA = os.path.join(HERE, "..", "data")
+T_WINDOW = 60          # same window as week09_common.jl
 
 # ---- load and fit FF3 --------------------------------------------------
-ret = pd.read_csv(os.path.join(DATA, "DailyReturn.csv"))
-ret["Date"] = pd.to_datetime(ret["Date"], format="%m/%d/%Y")
-ret = ret.sort_values("Date").reset_index(drop=True)
+# Same data and window as the Julia scripts: returns from adjusted closes,
+# the last 60 days that the Fama-French file also covers.
+px = pd.read_csv(os.path.join(DATA, "prices.csv"), parse_dates=["Date"]).set_index("Date")
+ret = (px / px.shift(1) - 1).iloc[1:].reset_index()
 stocks = [c for c in ret.columns if c not in ("Date", "SPY")]
 
-ff = pd.read_csv(os.path.join(DATA, "F-F_Research_Data_Factors_daily.CSV"))
+ff = pd.read_csv(os.path.join(DATA, "ff3_daily.csv"))
 ff["Date"] = pd.to_datetime(ff["Date"].astype(str), format="%Y%m%d")
 for c in ["Mkt-RF", "SMB", "HML", "RF"]:
     ff[c] = ff[c] / 100.0
 
-d = ret.merge(ff, on="Date", how="inner").sort_values("Date").reset_index(drop=True)
+d = ret.merge(ff, on="Date", how="inner").sort_values("Date").tail(T_WINDOW).reset_index(drop=True)
 fn = ["Mkt-RF", "SMB", "HML"]
 T, n, m = len(d), len(stocks), len(fn)
 
@@ -94,7 +96,7 @@ ax[1].bar([0], [100 - pshare], bottom=[pshare], color="#4a9e6f")
 ax[1].set_xticks([0])
 ax[1].set_xticklabels(["equal-wt\nportfolio"], fontsize=8)
 ax[1].set(ylim=(0, 100), yticks=[])
-ax[1].set_title("...and vanishes\nin the portfolio", fontsize=10)
+ax[1].set_title("...and shrinks\nin the portfolio", fontsize=10)
 ax[1].text(0, pshare / 2, "%.0f%%" % pshare, ha="center", va="center",
            fontsize=9, color="white", weight="bold")
 ax[1].text(0, pshare + (100 - pshare) / 2, "%.1f%%" % (100 - pshare),
